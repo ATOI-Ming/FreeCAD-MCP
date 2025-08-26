@@ -1,6 +1,6 @@
 # FreeCAD MCP Plugin
 
-The **FreeCAD MCP** plugin integrates the **Model Control Protocol (MCP)** into FreeCAD, enabling automation of model creation, macro execution, and view management through a server-client architecture. It provides a TCP server, a GUI control panel, and a client interface to streamline FreeCAD workflows, supporting tasks like running macros, adjusting views, and integrating with external tools (e.g., Claude, Cursor, Trace, CodeBuddy, Cline).
+The **FreeCAD MCP** plugin integrates the **Model Control Protocol (MCP)** into FreeCAD, enabling automation of model creation, macro execution, and view management through a server-client architecture. It provides a TCP server, a GUI control panel, and a client interface to streamline FreeCAD workflows, supporting tasks like running macros, adjusting views, and integrating with external tools (e.g., Claude, Cursor, Trace).
 
 ![FreeCAD MCP Icon](assets/icon.svg)
 
@@ -28,7 +28,7 @@ The FreeCAD MCP plugin (v0.1.0) offers:
 - **Workbench Integration**: Adds a `FreeCADMCPWorkbench` with toolbar/menu commands (`InitGui.py`).
 - **Visual Assets**: Includes workbench icon (`icon.svg`) and example models (`gear.png`, `flange.png`, `boat.png`, `table.png`).
 
-Watch the demo video: [FreeCAD MCP Demo](https://github.com/ATOI-Ming/FreeCADMCP/releases/download/v0.1.0/freecad.mp4)
+Watch the demo video: [FreeCAD MCP Demo](assets/freecad.mp4)
 
 ## Installation
 
@@ -109,7 +109,7 @@ Configure the MCP server to run `freecad_mcp_server.py` using FreeCAD's Python o
    - Adjust paths for your system:
      - Linux: `/home/<user>/anaconda3/bin/python`, `/home/<user>/.local/share/FreeCAD/Mod/FreeCADMCP/freecad_mcp_server.py`
      - macOS: `/Users/<user>/anaconda3/bin/python`, `/Users/<user>/Library/Application Support/FreeCAD/Mod/FreeCADMCP/freecad_mcp_server.py`
-   - The configuration uses `freecad_mcp_server.py`.
+   - The configuration uses `freecad_mcp_server.py` (corrected from `freecad_bridge.py`).
 
 2. **Run the Server**:
 
@@ -307,7 +307,7 @@ The `assets/` directory contains visual and demonstration resources for the Free
 - **table.png**: Example table model from CAD drawing recognition.
   ![Table Model](assets/table.png)
 - **freecad.mp4**: Demo video showcasing GUI panel, macro execution, and view switching.
-  Watch: [FreeCAD MCP Demo](https://github.com/ATOI-Ming/FreeCADMCP/releases/download/v0.1.0/freecad.mp4)
+  Watch: [FreeCAD MCP Demo](assets/freecad.mp4)
 
 ## Contributing
 
