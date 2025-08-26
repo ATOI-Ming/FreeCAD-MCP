@@ -99,7 +99,7 @@ Configure the MCP server to run `freecad_mcp_server.py` using FreeCAD's Python o
        "mcpServers": {
            "freecad": {
                "command": "C:\\ProgramData\\anaconda3\\python.exe",
-               "args": ["D:\\FreeCAD\\Mod\\FreeCADMCP\\freecad_mcp_server.py"]
+               "args": ["D:\\FreeCAD\\Mod\\FreeCADMCP\\src\\freecad_mcp_client.py"]
            }
        }
    }
@@ -109,7 +109,7 @@ Configure the MCP server to run `freecad_mcp_server.py` using FreeCAD's Python o
    - Adjust paths for your system:
      - Linux: `/home/<user>/anaconda3/bin/python`, `/home/<user>/.local/share/FreeCAD/Mod/FreeCADMCP/freecad_mcp_server.py`
      - macOS: `/Users/<user>/anaconda3/bin/python`, `/Users/<user>/Library/Application Support/FreeCAD/Mod/FreeCADMCP/freecad_mcp_server.py`
-   - The configuration uses `freecad_mcp_server.py` (corrected from `freecad_bridge.py`).
+   - The configuration uses `freecad_mcp_server.py`.
 
 2. **Run the Server**:
 
