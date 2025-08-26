@@ -1,6 +1,6 @@
 # FreeCAD MCP Plugin
 
-The **FreeCAD MCP** plugin integrates the **Model Control Protocol (MCP)** into FreeCAD, enabling automation of model creation, macro execution, and view management through a server-client architecture. It provides a TCP server, a GUI control panel, and a client interface to streamline FreeCAD workflows, supporting tasks like running macros, adjusting views, and integrating with external tools (e.g., Claude, Cursor, Trace).
+The **FreeCAD MCP** plugin integrates the **Model Control Protocol (MCP)** into FreeCAD, enabling automation of model creation, macro execution, and view management through a server-client architecture. It provides a TCP server, a GUI control panel, and a client interface to streamline FreeCAD workflows, supporting tasks like running macros, adjusting views, and integrating with external tools (e.g., Claude, Cursor, Trace, CodeBuddy, Cline).
 
 ![FreeCAD MCP Icon](assets/icon.svg)
 
@@ -109,7 +109,7 @@ Configure the MCP server to run `freecad_mcp_server.py` using FreeCAD's Python o
    - Adjust paths for your system:
      - Linux: `/home/<user>/anaconda3/bin/python`, `/home/<user>/.local/share/FreeCAD/Mod/FreeCADMCP/freecad_mcp_server.py`
      - macOS: `/Users/<user>/anaconda3/bin/python`, `/Users/<user>/Library/Application Support/FreeCAD/Mod/FreeCADMCP/freecad_mcp_server.py`
-   - The configuration uses `freecad_mcp_server.py` (corrected from `freecad_bridge.py`).
+   - The configuration uses `freecad_mcp_server.py`.
 
 2. **Run the Server**:
 
