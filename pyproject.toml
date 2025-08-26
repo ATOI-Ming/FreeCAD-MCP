@@ -1,0 +1,33 @@
+[project]
+name = "freecad-mcp"
+version = "0.1.0"
+description = "FreeCAD integration through the Model Context Protocol"
+authors = [
+    {name = "ATOI-ming", email = "1747772673@qq.com"}
+]
+dependencies = [
+    "mcp-server>=1.2.0",
+    "httpx>=0.24.1"
+]
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[project.scripts]
+freecad-mcp = "freecad_mcp.server:main"
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.7.0",
+    "isort>=5.12.0",
+    "mypy>=1.5.1",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/ATOI-Ming/freecad_mcp"
+"Bug Tracker" = "https://github.com/ATOI-Ming/freecad_mcp/issues"
