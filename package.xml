@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<package format="1">
+    <name>FreeCAD MCP</name>
+    <description>FreeCAD Model Control Protocol - Connect FreeCAD to Cline、cursor、trae via MCP</description>
+    <version>0.1.0</version>
+    <maintainer email="1757772673@qq.com">ATOI-Ming</maintainer>
+    <license>MIT</license>
+    <url type="repository">https://github.com/ATOI-Ming/freecad-mcp</url>
+    
+    <content>
+        <workbench>
+            <classname>FreeCADMCPWorkbench</classname>
+            <subdirectory>./</subdirectory>
+            <icon>assets/icon.svg</icon>
+            <depend>FreeCAD</depend>
+        </workbench>
+    </content>
+    
+</package> 
