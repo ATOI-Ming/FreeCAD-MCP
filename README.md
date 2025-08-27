@@ -29,7 +29,7 @@ The FreeCAD MCP plugin (v0.1.0) offers:
 - **Visual Assets**: Includes workbench icon (`icon.svg`) and example models (`gear.png`, `flange.png`, `boat.png`, `table.png`).
 
 Watch the demo:
-<img src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif" width="600">  
+<img src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif" width="900">  
 Download: [FreeCAD MCP Demo MP4](assets/freecad.mp4)  
 
 
