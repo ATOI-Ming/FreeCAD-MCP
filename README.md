@@ -372,7 +372,7 @@ The `assets/` directory contains visual and demonstration resources for the Free
 - **table.png**: Example table model from CAD drawing recognition.
   ![Table Model](assets/table.png)
 - **freecad.gif**: Demo animation showcasing GUI panel, macro execution, and view switching.
-  Watch: <img src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif" width="600">
+  Watch: <img src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif" width="900">
 - **freecad.mp4**: Original demo video, available for download.
   Download: [FreeCAD MCP Demo MP4](assets/freecad.mp4)
 
