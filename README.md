@@ -256,4 +256,136 @@ The plugin provides the following tool functions, implemented in `freecad_mcp_cl
   - **Output**: JSON object containing log content (e.g., `{"status": "success", "result": {...}}`).
   - **Implementation**:
     - Client: Sends `{"type": "get_report", "params": {}}` via `stdio` or TCP.
-    - Server: Reads log file via `handle_get
+    - Server: Reads log file via `handle_get_report`, returns content.
+
+### Auxiliary Functions
+
+- **Logging System**:
+  - **Description**: Logs operations and errors to `freecad_mcp_log.txt` and the GUI report browser (100-line limit).
+  - **Implementation**: 
+    - Server: Uses `log_message` for standard messages and `log_error` for errors with HTML formatting in the GUI.
+    - Logs include timestamps and are appended to the file and displayed in the report browser.
+
+- **Server Management**:
+  - **Description**: Starts/stops the MCP server, listening on `localhost:9876` for TCP connections.
+  - **Implementation**: 
+    - Server: `FreeCADMCPServer` class manages server lifecycle (`start`, `stop` methods).
+    - GUI: `FreeCADMCPPanel` provides start/stop buttons.
+
+- **GUI Panel**:
+  - **Description**: Provides a graphical control panel (`FreeCADMCPPanel`) for server control, log management, and view switching.
+  - **Implementation**: 
+    - Server: Uses `PySide2` to create a dialog with buttons for starting/stopping the server, clearing logs, and switching views (front, top, right, axonometric).
+    - Updated every second via `QTimer` for real-time log display.
+
+- **Error Handling**:
+  - **Description**: Captures and reports exceptions during command execution, validation, and server operations.
+  - **Implementation**: 
+    - Client: Uses `try-except` to catch JSON parsing, socket connection, and execution errors, returning JSON error objects with tracebacks.
+    - Server: Logs errors via `log_error`, displays in GUI with red HTML formatting.
+
+## Use Cases
+
+### 1. Automating Gear Model Creation
+
+- **Scenario**: Create a gear model programmatically for engineering design.
+- **Steps**:
+  1. Create a macro file:
+     ```bash
+     python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --create-macro gear.FCMacro --template-type part
+     ```
+  2. Update the macro:
+     ```bash
+     python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --update-macro gear.FCMacro --code "import FreeCAD, Part\nradius = 10\ngear = Part.makeCylinder(radius, 5)\nPart.show(gear)"
+     ```
+  3. Run the macro:
+     ```bash
+     python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro gear.FCMacro --params '{"radius": 15}'
+     ```
+  4. Result: Gear model created, recomputed, and displayed in axonometric view.
+- **Output**: 
+  ![Gear Model](assets/gear.png)
+
+### 2. Generating a Flange Model
+
+- **Scenario**: Automate flange creation with holes for mechanical design.
+- **Steps**:
+  1. Create and run a macro via GUI (`FreeCAD_MCP_RunMacro`) or command line:
+     ```bash
+     python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro flange.FCMacro
+     ```
+  2. Result: Flange model created with normalized code.
+- **Output**: 
+  ![Flange Model](assets/flange.png)
+
+### 3. Text-Based Model Generation
+
+- **Scenario**: Generate a boat model from a text description (e.g., "create a boat with a curved hull").
+- **Steps**:
+  1. Use an external tool (e.g., Claude) to generate `boat.FCMacro`.
+  2. Run the macro:
+     ```bash
+     python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro boat.FCMacro
+     ```
+  3. Result: Boat model created with automatic imports and view adjustment.
+- **Output**: 
+  ![Boat Model](assets/boat.png)
+
+### 4. CAD Drawing Recognition
+
+- **Scenario**: Recreate a table model from a CAD drawing.
+- **Steps**:
+  1. Convert CAD drawing to `table.FCMacro` using a tool like Trace.
+  2. Run via GUI or command line:
+     ```bash
+     python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro table.FCMacro
+     ```
+  3. Result: Table model recreated in FreeCAD.
+- **Output**: 
+  ![Table Model](assets/table.png)
+
+### 5. Batch Processing Models
+
+- **Scenario**: Automate creation of multiple models (e.g., gear and flange).
+- **Steps**:
+  1. Create a script to loop through macros:
+     ```bash
+     for macro in gear.FCMacro flange.FCMacro; do
+         python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro $macro
+     done
+     ```
+  2. Result: Models generated sequentially, logged in `freecad_mcp_log.txt`.
+
+## Assets
+
+The `assets/` directory contains visual and demonstration resources for the FreeCAD MCP plugin:
+
+- **icon.svg**: Workbench and command icon for `FreeCADMCPWorkbench`, used in `InitGui.py` and `package.xml`.
+  ![FreeCAD MCP Icon](assets/icon.svg)
+- **gear.png**: Example gear model created via `run_macro`.
+  ![Gear Model](assets/gear.png)
+- **flange.png**: Example flange model for engineering design.
+  ![Flange Model](assets/flange.png)
+- **boat.png**: Example boat model from text-based generation.
+  ![Boat Model](assets/boat.png)
+- **table.png**: Example table model from CAD drawing recognition.
+  ![Table Model](assets/table.png)
+- **freecad.mp4**: Demo video showcasing GUI panel, macro execution, and view switching.
+  Watch: <video src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.mp4" controls width="600"></video>
+  Download: [FreeCAD MCP Demo MP4](assets/freecad.mp4)
+  For alternative playback, view on YouTube: [FreeCAD MCP Demo](https://youtube.com/your-video-link) (replace with actual link after uploading).
+
+## Contributing
+
+Contributions are welcome! To contribute:
+
+1. Fork the repository: `https://github.com/ATOI-Ming/FreeCAD-MCP`.
+2. Create a branch: `git checkout -b feature/your-feature`.
+3. Commit changes: `git commit -m "Add your feature"`.
+4. Push and create a Pull Request.
+
+Please follow the [Code of Conduct](CODE_OF_CONDUCT.md) (to be added).
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
