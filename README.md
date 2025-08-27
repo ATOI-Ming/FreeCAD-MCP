@@ -26,12 +26,11 @@ The FreeCAD MCP plugin (v0.1.0) offers:
 - **GUI Control Panel**: Includes buttons to start/stop the server, clear logs, and switch views (front, top, right, axonometric) (`freecad_mcp_server.py`).
 - **Logging**: Records messages and errors to `freecad_mcp_log.txt` and a GUI report browser (100-line limit).
 - **Workbench Integration**: Adds a `FreeCADMCPWorkbench` with toolbar/menu commands (`InitGui.py`).
-- **Visual Assets**: Includes workbench icon (`icon.svg`) and example models (`gear.png`, `flange.png`, `boat.png`, `table.png`).
+- **Visual Assets**: Includes workbench icon (`icon.svg`), example models (`gear.png`, `flange.png`, `boat.png`, `table.png`), and demo animation (`freecad.gif`).
 
-Watch the demo:
-<img src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif" width="900">  
+Watch the demo: <img src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif" width="600">  
 Download: [FreeCAD MCP Demo MP4](assets/freecad.mp4)  
-
+For alternative playback, view on YouTube: [FreeCAD MCP Demo](https://youtube.com/your-video-link) (replace with actual link after uploading).
 
 ## Installation
 
@@ -41,8 +40,24 @@ Follow these steps to install and set up the FreeCAD MCP plugin.
 
 - **FreeCAD**: Version 0.21 or later. [Download FreeCAD](https://www.freecad.org/downloads.php).
 - **Python**: Version 3.8+ (included with FreeCAD or via Anaconda).
-- **Anaconda** (optional, for dependency management): [Download Anaconda](https://www.anaconda.com/products/distribution).
-- **Dependencies**: `mcp-server>=1.2.0`, `httpx>=0.24.1` (specified in `pyproject.toml`).
+- **Anaconda** (recommended, for dependency management): [Download Anaconda](https://www.anaconda.com/products/distribution).
+- **Python Dependencies**:
+  - Required packages: `mcp-server>=1.2.0`, `httpx>=0.24.1` (specified in `pyproject.toml`).
+  - **Installation** (in Anaconda environment):
+    ```bash
+    conda activate freecad_mcp
+    pip install mcp-server>=1.2.0 httpx>=0.24.1
+    ```
+  - **Alternative** (without Anaconda, using system Python):
+    ```bash
+    python -m pip install mcp-server>=1.2.0 httpx>=0.24.1
+    ```
+  - **Verify Installation**:
+    ```bash
+    pip show mcp-server
+    pip show httpx
+    ```
+    Ensure `mcp-server` version is >=1.2.0 and `httpx` version is >=0.24.1. If not installed, repeat the `pip install` command.
 
 ### Installation Steps
 
@@ -73,7 +88,7 @@ Follow these steps to install and set up the FreeCAD MCP plugin.
    conda activate freecad_mcp
    ```
 
-   Install dependencies:
+   Install dependencies (already covered in Prerequisites, but repeated for clarity):
 
    ```bash
    pip install mcp-server>=1.2.0 httpx>=0.24.1
@@ -88,6 +103,7 @@ Follow these steps to install and set up the FreeCAD MCP plugin.
 
    - Confirm the `FreeCADMCPWorkbench` appears in FreeCAD.
    - Click `FreeCAD_MCP_Show` to open the control panel or `FreeCAD_MCP_RunMacro` to test macro execution.
+   - Check `freecad_mcp_log.txt` in `D:\FreeCAD\Mod\FreeCAD-MCP-main\` for startup messages.
 
 ## MCP Configuration
 
@@ -372,9 +388,10 @@ The `assets/` directory contains visual and demonstration resources for the Free
 - **table.png**: Example table model from CAD drawing recognition.
   ![Table Model](assets/table.png)
 - **freecad.gif**: Demo animation showcasing GUI panel, macro execution, and view switching.
-  Watch: <img src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif" width="900">
+  Watch: <img src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif" width="600">
 - **freecad.mp4**: Original demo video, available for download.
   Download: [FreeCAD MCP Demo MP4](assets/freecad.mp4)
+  For alternative playback, view on YouTube: [FreeCAD MCP Demo](https://youtube.com/your-video-link) (replace with actual link after uploading).
 
 ## Contributing
 
