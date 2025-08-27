@@ -28,7 +28,7 @@ The FreeCAD MCP plugin (v0.1.0) offers:
 - **Workbench Integration**: Adds a `FreeCADMCPWorkbench` with toolbar/menu commands (`InitGui.py`).
 - **Visual Assets**: Includes workbench icon (`icon.svg`) and example models (`gear.png`, `flange.png`, `boat.png`, `table.png`).
 
-Watch the demo video: <video src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.mp4" controls width="600"></video>  
+Watch the demo: <img src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif" width="600">  
 Download: [FreeCAD MCP Demo MP4](assets/freecad.mp4)  
 For alternative playback, view on YouTube: [FreeCAD MCP Demo](https://youtube.com/your-video-link) (replace with actual link after uploading).
 
@@ -262,25 +262,25 @@ The plugin provides the following tool functions, implemented in `freecad_mcp_cl
 
 - **Logging System**:
   - **Description**: Logs operations and errors to `freecad_mcp_log.txt` and the GUI report browser (100-line limit).
-  - **Implementation**: 
+  - **Implementation**:
     - Server: Uses `log_message` for standard messages and `log_error` for errors with HTML formatting in the GUI.
     - Logs include timestamps and are appended to the file and displayed in the report browser.
 
 - **Server Management**:
   - **Description**: Starts/stops the MCP server, listening on `localhost:9876` for TCP connections.
-  - **Implementation**: 
+  - **Implementation**:
     - Server: `FreeCADMCPServer` class manages server lifecycle (`start`, `stop` methods).
     - GUI: `FreeCADMCPPanel` provides start/stop buttons.
 
 - **GUI Panel**:
   - **Description**: Provides a graphical control panel (`FreeCADMCPPanel`) for server control, log management, and view switching.
-  - **Implementation**: 
+  - **Implementation**:
     - Server: Uses `PySide2` to create a dialog with buttons for starting/stopping the server, clearing logs, and switching views (front, top, right, axonometric).
     - Updated every second via `QTimer` for real-time log display.
 
 - **Error Handling**:
   - **Description**: Captures and reports exceptions during command execution, validation, and server operations.
-  - **Implementation**: 
+  - **Implementation**:
     - Client: Uses `try-except` to catch JSON parsing, socket connection, and execution errors, returning JSON error objects with tracebacks.
     - Server: Logs errors via `log_error`, displays in GUI with red HTML formatting.
 
@@ -303,7 +303,7 @@ The plugin provides the following tool functions, implemented in `freecad_mcp_cl
      python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro gear.FCMacro --params '{"radius": 15}'
      ```
   4. Result: Gear model created, recomputed, and displayed in axonometric view.
-- **Output**: 
+- **Output**:
   ![Gear Model](assets/gear.png)
 
 ### 2. Generating a Flange Model
@@ -315,7 +315,7 @@ The plugin provides the following tool functions, implemented in `freecad_mcp_cl
      python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro flange.FCMacro
      ```
   2. Result: Flange model created with normalized code.
-- **Output**: 
+- **Output**:
   ![Flange Model](assets/flange.png)
 
 ### 3. Text-Based Model Generation
@@ -328,7 +328,7 @@ The plugin provides the following tool functions, implemented in `freecad_mcp_cl
      python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro boat.FCMacro
      ```
   3. Result: Boat model created with automatic imports and view adjustment.
-- **Output**: 
+- **Output**:
   ![Boat Model](assets/boat.png)
 
 ### 4. CAD Drawing Recognition
@@ -341,7 +341,7 @@ The plugin provides the following tool functions, implemented in `freecad_mcp_cl
      python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro table.FCMacro
      ```
   3. Result: Table model recreated in FreeCAD.
-- **Output**: 
+- **Output**:
   ![Table Model](assets/table.png)
 
 ### 5. Batch Processing Models
@@ -370,8 +370,9 @@ The `assets/` directory contains visual and demonstration resources for the Free
   ![Boat Model](assets/boat.png)
 - **table.png**: Example table model from CAD drawing recognition.
   ![Table Model](assets/table.png)
-- **freecad.mp4**: Demo video showcasing GUI panel, macro execution, and view switching.
-  Watch: <video src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.mp4" controls width="600"></video>
+- **freecad.gif**: Demo animation showcasing GUI panel, macro execution, and view switching.
+  Watch: <img src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif" width="600">
+- **freecad.mp4**: Original demo video, available for download.
   Download: [FreeCAD MCP Demo MP4](assets/freecad.mp4)
   For alternative playback, view on YouTube: [FreeCAD MCP Demo](https://youtube.com/your-video-link) (replace with actual link after uploading).
 
