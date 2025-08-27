@@ -28,7 +28,8 @@ The FreeCAD MCP plugin (v0.1.0) offers:
 - **Workbench Integration**: Adds a `FreeCADMCPWorkbench` with toolbar/menu commands (`InitGui.py`).
 - **Visual Assets**: Includes workbench icon (`icon.svg`), example models (`gear.png`, `flange.png`, `boat.png`, `table.png`), and demo animation (`freecad.gif`).
 
-Watch the demo: <img src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif" width="600">  
+Watch the demo: 
+<img src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif" width="900">  
 Download: [FreeCAD MCP Demo MP4](assets/freecad.mp4)  
 For alternative playback, view on YouTube: [FreeCAD MCP Demo](https://youtube.com/your-video-link) (replace with actual link after uploading).
 
