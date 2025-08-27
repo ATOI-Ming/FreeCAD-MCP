@@ -120,7 +120,7 @@ Configure the MCP client to run `freecad_mcp_client.py` using Anaconda's Python 
                "disabled": false,
                "timeout": 60,
                "type": "stdio",
-               "command": "D:\\Anaconda3\\python.exe",
+               "command": "D:\\anaconda\\python.exe",
                "args": ["D:\\FreeCAD\\Mod\\FreeCAD-MCP-main\\src\\freecad_mcp_client.py"]
            }
        }
@@ -129,8 +129,8 @@ Configure the MCP client to run `freecad_mcp_client.py` using Anaconda's Python 
 
    **Notes**:
    - Adjust paths for your system:
-     - Linux: `/home/<user>/anaconda3/bin/python`, `/home/<user>/.local/share/FreeCAD/Mod/FreeCAD-MCP-main/src/freecad_mcp_client.py`
-     - macOS: `/Users/<user>/anaconda3/bin/python`, `/Users/<user>/Library/Application Support/FreeCAD/Mod/FreeCAD-MCP-main/src/freecad_mcp_client.py`
+     - Linux: `/home/<user>/anaconda/bin/python`, `/home/<user>/.local/share/FreeCAD/Mod/FreeCAD-MCP-main/src/freecad_mcp_client.py`
+     - macOS: `/Users/<user>/anaconda/bin/python`, `/Users/<user>/Library/Application Support/FreeCAD/Mod/FreeCAD-MCP-main/src/freecad_mcp_client.py`
    - The configuration runs `freecad_mcp_client.py` for `stdio` communication with FreeCAD.
 
 2. **Run the Server**:
