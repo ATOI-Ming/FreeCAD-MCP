@@ -1,6 +1,6 @@
 # FreeCAD MCP Plugin
 
-The **FreeCAD MCP** plugin integrates the **Model Control Protocol (MCP)** into FreeCAD, enabling automation of model creation, macro execution, and view management through a server-client architecture. It provides a TCP server, a GUI control panel, and a client interface to streamline FreeCAD workflows, supporting tasks like running macros, adjusting views, and integrating with external tools (e.g., Claude, Cursor, Trace, CodeBuddy, cline).
+The **FreeCAD MCP** plugin integrates the **Model Control Protocol (MCP)** into FreeCAD, enabling automation of model creation, macro execution, and view management through a server-client architecture. It provides a TCP server, a GUI control panel, and a client interface to streamline FreeCAD workflows, supporting tasks like running macros, adjusting views, and integrating with external tools (e.g., Claude, Cursor, Trace, CodeBuddy).
 
 ![FreeCAD MCP Icon](assets/icon.svg)
 
@@ -28,7 +28,7 @@ The FreeCAD MCP plugin (v0.1.0) offers:
 - **Workbench Integration**: Adds a `FreeCADMCPWorkbench` with toolbar/menu commands (`InitGui.py`).
 - **Visual Assets**: Includes workbench icon (`icon.svg`) and example models (`gear.png`, `flange.png`, `boat.png`, `table.png`).
 
-Watch the demo video: [FreeCAD MCP Demo](assets/freecad.mp4)
+Watch the demo video: [FreeCAD MCP Demo](assets/freecad.mp4) (click to download/view).
 
 ## Installation
 
@@ -46,19 +46,19 @@ Follow these steps to install and set up the FreeCAD MCP plugin.
 1. **Clone the Repository**:
 
    ```bash
-   git clone https://github.com/ATOI-Ming/FreeCADMCP.git
+   git clone https://github.com/ATOI-Ming/FreeCAD-MCP.git
    ```
 
 2. **Copy to FreeCAD Mod Directory**:
 
-   Move the `FreeCADMCP` folder to FreeCAD's Mod directory:
+   Move the `FreeCAD-MCP` folder to FreeCAD's Mod directory:
 
    - **Windows**: `C:\Users\<YourUser>\AppData\Roaming\FreeCAD\Mod\`
    - **Linux**: `~/.local/share/FreeCAD/Mod/`
    - **macOS**: `~/Library/Application Support/FreeCAD/Mod/`
 
    ```bash
-   cp -r FreeCADMCP C:\Users\<YourUser>\AppData\Roaming\FreeCAD\Mod\
+   cp -r FreeCAD-MCP C:\Users\<YourUser>\AppData\Roaming\FreeCAD\Mod\
    ```
 
 3. **Set Up Anaconda Environment** (recommended):
@@ -92,14 +92,14 @@ Configure the MCP server to run `freecad_mcp_server.py` using FreeCAD's Python o
 
 1. **Create Configuration File**:
 
-   Create a JSON file (e.g., `mcp_config.json`) in `D:\FreeCAD\Mod\FreeCADMCP\`:
+   Create a JSON file (e.g., `mcp_config.json`) in `D:\FreeCAD\Mod\FreeCAD-MCP\`:
 
    ```json
    {
        "mcpServers": {
            "freecad": {
-               "command": "D:\\anaconda\\python.exe",
-               "args": ["D:\\FreeCAD\\Mod\\FreeCAD-MCP-main\\src\\freecad_mcp_client.py"]
+               "command": "C:\\ProgramData\\Anaconda3\\python.exe",
+               "args": ["D:\\FreeCAD\\Mod\\FreeCAD-MCP\\freecad_mcp_server.py"]
            }
        }
    }
@@ -107,9 +107,9 @@ Configure the MCP server to run `freecad_mcp_server.py` using FreeCAD's Python o
 
    **Notes**:
    - Adjust paths for your system:
-     - Linux: `/home/<user>/anaconda3/bin/python`, `/home/<user>/.local/share/FreeCAD/Mod/FreeCAD-MCP-main/src/freecad_mcp_client.py`
-     - macOS: `/Users/<user>/anaconda3/bin/python`, `/Users/<user>/Library/Application Support/FreeCAD/Mod/FreeCAD-MCP-main/freecad_mcp_client.py`
-   - The configuration uses `freecad_mcp_client.py`.
+     - Linux: `/home/<user>/anaconda3/bin/python`, `/home/<user>/.local/share/FreeCAD/Mod/FreeCAD-MCP/freecad_mcp_server.py`
+     - macOS: `/Users/<user>/anaconda3/bin/python`, `/Users/<user>/Library/Application Support/FreeCAD/Mod/FreeCAD-MCP/freecad_mcp_server.py`
+   - The configuration uses `freecad_mcp_server.py` to start the TCP server.
 
 2. **Run the Server**:
 
@@ -117,12 +117,12 @@ Configure the MCP server to run `freecad_mcp_server.py` using FreeCAD's Python o
    - **Command-Line Method**:
      ```bash
      conda activate freecad_mcp
-     python D:\FreeCAD\Mod\FreeCAD-MCP-main\freecad_mcp_server.py
+     python D:\FreeCAD\Mod\FreeCAD-MCP\freecad_mcp_server.py
      ```
 
 3. **Verify Server**:
 
-   - Check `freecad_mcp_log.txt` in `D:\FreeCAD\Mod\FreeCADMCP\` for startup messages (e.g., "Server started on localhost:9876").
+   - Check `freecad_mcp_log.txt` in `D:\FreeCAD\Mod\FreeCAD-MCP\` for startup messages (e.g., "Server started on localhost:9876").
    - Ensure the server is listening on `localhost:9876`.
 
 ## Usage
@@ -151,11 +151,11 @@ Configure the MCP server to run `freecad_mcp_server.py` using FreeCAD's Python o
      ```
    - Run a macro:
      ```bash
-     python D:\FreeCAD\Mod\FreeCAD-MCP-mian\src\freecad_mcp_client.py --run-macro path/to/macro.FCMacro
+     python D:\FreeCAD\Mod\FreeCAD-MCP\freecad_mcp_client.py --run-macro path/to/macro.FCMacro
      ```
    - With parameters:
      ```bash
-     python D:\FreeCAD\Mod\FreeCAD-MCP-mian\src\freecad_mcp_client.py --run-macro gear.FCMacro --params '{"radius": 10}'
+     python D:\FreeCAD\Mod\FreeCAD-MCP\freecad_mcp_client.py --run-macro gear.FCMacro --params '{"radius": 10}'
      ```
 
 ### Remote Control
@@ -163,8 +163,8 @@ Configure the MCP server to run `freecad_mcp_server.py` using FreeCAD's Python o
 Use `freecad_mcp_client.py` to send commands to the server:
 
 ```bash
-python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --set-view front
-python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --get-report
+python D:\FreeCAD\Mod\FreeCAD-MCP\freecad_mcp_client.py --set-view front
+python D:\FreeCAD\Mod\FreeCAD-MCP\freecad_mcp_client.py --get-report
 ```
 
 ## Tool Functions
@@ -307,13 +307,13 @@ The `assets/` directory contains visual and demonstration resources for the Free
 - **table.png**: Example table model from CAD drawing recognition.
   ![Table Model](assets/table.png)
 - **freecad.mp4**: Demo video showcasing GUI panel, macro execution, and view switching.
-  Watch: [FreeCAD MCP Demo](assets/freecad.mp4)
+  Watch: [FreeCAD MCP Demo](assets/freecad.mp4) (click to download/view)
 
 ## Contributing
 
 Contributions are welcome! To contribute:
 
-1. Fork the repository: `https://github.com/ATOI-Ming/FreeCADMCP`.
+1. Fork the repository: `https://github.com/ATOI-Ming/FreeCAD-MCP`.
 2. Create a branch: `git checkout -b feature/your-feature`.
 3. Commit changes: `git commit -m "Add your feature"`.
 4. Push and create a Pull Request.
