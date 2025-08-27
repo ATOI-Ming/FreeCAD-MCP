@@ -174,23 +174,6 @@ python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --get-report
 
 The plugin provides the following tool functions, defined in `freecad_mcp_client.py` (for sending commands via `stdio`) and handled by `freecad_mcp_server.py` (for processing commands):
 
-- **get_scene_info**:
-  - **Description**: Retrieves details of the active FreeCAD document (e.g., object names, types, properties).
-  - **Usage**: 
-    ```bash
-    python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --get-scene-info
-    ```
-  - **Output**: JSON with document details.
-  - **Code**: Sent via `freecad_mcp_client.py`, handled by `freecad_mcp_server.py` (`handle_get_scene_info`).
-
-- **run_script**:
-  - **Description**: Executes a Python script in FreeCAD's Python environment.
-  - **Usage**: 
-    ```bash
-    python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-script script.py
-    ```
-  - **Code**: Sent via `freecad_mcp_client.py`, handled by `freecad_mcp_server.py` (`handle_run_script`).
-
 - **run_macro**:
   - **Description**: Runs a `.FCMacro` file with optional parameters, normalizing code (adds `FreeCAD`, `Part`, `math` imports, recomputes document, sets axonometric view).
   - **Usage**: 
