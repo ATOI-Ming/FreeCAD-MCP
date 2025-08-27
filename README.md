@@ -22,13 +22,13 @@ The FreeCAD MCP plugin (v0.1.0) offers:
 
 - **TCP Server**: Runs on `localhost:9876`, handling commands like `get_scene_info`, `run_script`, `run_macro`, `set_view`, and `get_report` (`freecad_mcp_server.py`).
 - **GUI Control Panel**: Provides buttons to start/stop the server, clear logs, and switch views (front, top, right, axonometric) (`freecad_mcp_server.py`).
-- **Client Interface**: Command-line tool to run `.FCMacro` files, validate code, and control FreeCAD remotely (`freecad_mcp_client.py`).
+- **Client Interface**: Command-line tool to send commands to the server, run `.FCMacro` files, validate code, and control FreeCAD remotely (`freecad_mcp_client.py`).
 - **Macro Normalization**: Automatically adds imports (`FreeCAD`, `Part`, `math`) and post-execution steps (recompute, view adjustment) (`freecad_mcp_client.py`).
 - **Logging**: Records messages and errors to `freecad_mcp_log.txt` and a GUI report browser (100-line limit).
 - **Workbench Integration**: Adds a `FreeCADMCPWorkbench` with toolbar/menu commands (`InitGui.py`).
 - **Visual Assets**: Includes workbench icon (`icon.svg`) and example models (`gear.png`, `flange.png`, `boat.png`, `table.png`).
 
-Watch the demo video: [FreeCAD MCP Demo](assets/freecad.mp4) (click to download/view).
+Watch the demo video: [FreeCAD MCP Demo](assets/freecad.mp4) (click to download/view). For embedded playback, view on YouTube: [FreeCAD MCP Demo](https://youtube.com/your-video-link) (replace with actual link after uploading).
 
 ## Installation
 
@@ -36,7 +36,7 @@ Follow these steps to install and set up the FreeCAD MCP plugin.
 
 ### Prerequisites
 
-- **FreeCAD**: Version 0.21 or later. [Download FreeCAD](https://www.freecadweb.org/downloads.php).
+- **FreeCAD**: Version 0.21 or later. [Download FreeCAD](https://www.freecad.org/downloads.php).
 - **Python**: Version 3.8+ (included with FreeCAD or via Anaconda).
 - **Anaconda** (optional, for dependency management): [Download Anaconda](https://www.anaconda.com/products/distribution).
 - **Dependencies**: `mcp-server>=1.2.0`, `httpx>=0.24.1` (specified in `pyproject.toml`).
@@ -98,7 +98,10 @@ Configure the MCP server to run `freecad_mcp_server.py` using FreeCAD's Python o
    {
        "mcpServers": {
            "freecad": {
-               "command": "C:\\ProgramData\\Anaconda3\\python.exe",
+               "disabled": false,
+               "timeout": 60,
+               "type": "tcp",
+               "command": "D:\\Anaconda3\\python.exe",
                "args": ["D:\\FreeCAD\\Mod\\FreeCAD-MCP\\freecad_mcp_server.py"]
            }
        }
@@ -109,7 +112,7 @@ Configure the MCP server to run `freecad_mcp_server.py` using FreeCAD's Python o
    - Adjust paths for your system:
      - Linux: `/home/<user>/anaconda3/bin/python`, `/home/<user>/.local/share/FreeCAD/Mod/FreeCAD-MCP/freecad_mcp_server.py`
      - macOS: `/Users/<user>/anaconda3/bin/python`, `/Users/<user>/Library/Application Support/FreeCAD/Mod/FreeCAD-MCP/freecad_mcp_server.py`
-   - The configuration uses `freecad_mcp_server.py` to start the TCP server.
+   - The configuration uses `freecad_mcp_server.py` to start the TCP server on `localhost:9876`.
 
 2. **Run the Server**:
 
@@ -169,56 +172,56 @@ python D:\FreeCAD\Mod\FreeCAD-MCP\freecad_mcp_client.py --get-report
 
 ## Tool Functions
 
-The plugin provides the following tool functions, defined in `freecad_mcp_client.py` and handled by `freecad_mcp_server.py`:
+The plugin provides the following tool functions, defined in `freecad_mcp_client.py` (for sending commands) and handled by `freecad_mcp_server.py` (for processing commands):
 
 - **get_scene_info**:
   - **Description**: Retrieves details of the active FreeCAD document (e.g., object names, types, properties).
   - **Usage**: 
     ```bash
-    python freecad_mcp_client.py --get-scene-info
+    python D:\FreeCAD\Mod\FreeCAD-MCP\freecad_mcp_client.py --get-scene-info
     ```
   - **Output**: JSON with document details.
-  - **Code**: `freecad_mcp_server.py` (`handle_get_scene_info`).
+  - **Code**: Sent via `freecad_mcp_client.py`, handled by `freecad_mcp_server.py` (`handle_get_scene_info`).
 
 - **run_script**:
   - **Description**: Executes a Python script in FreeCAD's Python environment.
   - **Usage**: 
     ```bash
-    python freecad_mcp_client.py --run-script script.py
+    python D:\FreeCAD\Mod\FreeCAD-MCP\freecad_mcp_client.py --run-script script.py
     ```
-  - **Code**: `freecad_mcp_server.py` (`handle_run_script`).
+  - **Code**: Sent via `freecad_mcp_client.py`, handled by `freecad_mcp_server.py` (`handle_run_script`).
 
 - **run_macro**:
   - **Description**: Runs a `.FCMacro` file with optional parameters, normalizing code (adds `FreeCAD`, `Part`, `math` imports, recomputes document, sets axonometric view).
   - **Usage**: 
     ```bash
-    python freecad_mcp_client.py --run-macro macro.FCMacro --params '{"radius": 10}'
+    python D:\FreeCAD\Mod\FreeCAD-MCP\freecad_mcp_client.py --run-macro macro.FCMacro --params '{"radius": 10}'
     ```
-  - **Code**: `freecad_mcp_client.py` (`normalize_macro_code`), `freecad_mcp_server.py` (`handle_run_macro`).
+  - **Code**: Sent via `freecad_mcp_client.py` (`normalize_macro_code`), handled by `freecad_mcp_server.py` (`handle_run_macro`).
 
 - **set_view**:
   - **Description**: Adjusts the FreeCAD view to front, top, right, or axonometric.
   - **Usage**: 
     ```bash
-    python freecad_mcp_client.py --set-view axonometric
+    python D:\FreeCAD\Mod\FreeCAD-MCP\freecad_mcp_client.py --set-view axonometric
     ```
-  - **Code**: `freecad_mcp_server.py` (`handle_set_view`).
+  - **Code**: Sent via `freecad_mcp_client.py`, handled by `freecad_mcp_server.py` (`handle_set_view`).
 
 - **get_report**:
   - **Description**: Retrieves the latest logs from `freecad_mcp_log.txt`.
   - **Usage**: 
     ```bash
-    python freecad_mcp_client.py --get-report
+    python D:\FreeCAD\Mod\FreeCAD-MCP\freecad_mcp_client.py --get-report
     ```
-  - **Code**: `freecad_mcp_server.py` (`handle_get_report`).
+  - **Code**: Sent via `freecad_mcp_client.py`, handled by `freecad_mcp_server.py` (`handle_get_report`).
 
 - **validate_macro_code**:
   - **Description**: Validates `.FCMacro` code before execution.
   - **Usage**: 
     ```bash
-    python freecad_mcp_client.py --validate-macro-code macro.FCMacro
+    python D:\FreeCAD\Mod\FreeCAD-MCP\freecad_mcp_client.py --validate-macro-code macro.FCMacro
     ```
-  - **Code**: `freecad_mcp_client.py` (`validate_macro_code`).
+  - **Code**: Handled by `freecad_mcp_client.py` (`validate_macro_code`).
 
 ## Use Cases
 
@@ -235,7 +238,7 @@ The plugin provides the following tool functions, defined in `freecad_mcp_client
      ```
   2. Run via client:
      ```bash
-     python freecad_mcp_client.py --run-macro gear.FCMacro --params '{"radius": 15}'
+     python D:\FreeCAD\Mod\FreeCAD-MCP\freecad_mcp_client.py --run-macro gear.FCMacro --params '{"radius": 15}'
      ```
   3. Result: Gear model created, recomputed, and displayed in axonometric view.
 - **Output**: 
@@ -248,7 +251,7 @@ The plugin provides the following tool functions, defined in `freecad_mcp_client
   1. Use a macro (`flange.FCMacro`) to create a flange.
   2. Run via GUI (`FreeCAD_MCP_RunMacro`) or command line:
      ```bash
-     python freecad_mcp_client.py --run-macro flange.FCMacro
+     python D:\FreeCAD\Mod\FreeCAD-MCP\freecad_mcp_client.py --run-macro flange.FCMacro
      ```
   3. Result: Flange model created with normalized code.
 - **Output**: 
@@ -261,7 +264,7 @@ The plugin provides the following tool functions, defined in `freecad_mcp_client
   1. Use an external tool (e.g., Claude) to generate `boat.FCMacro` from the description.
   2. Run the macro:
      ```bash
-     python freecad_mcp_client.py --run-macro boat.FCMacro
+     python D:\FreeCAD\Mod\FreeCAD-MCP\freecad_mcp_client.py --run-macro boat.FCMacro
      ```
   3. Result: Boat model created with automatic imports and view adjustment.
 - **Output**: 
@@ -274,7 +277,7 @@ The plugin provides the following tool functions, defined in `freecad_mcp_client
   1. Convert CAD drawing to `table.FCMacro` using a tool like Trace.
   2. Run via GUI or command line:
      ```bash
-     python freecad_mcp_client.py --run-macro table.FCMacro
+     python D:\FreeCAD\Mod\FreeCAD-MCP\freecad_mcp_client.py --run-macro table.FCMacro
      ```
   3. Result: Table model recreated in FreeCAD.
 - **Output**: 
@@ -287,7 +290,7 @@ The plugin provides the following tool functions, defined in `freecad_mcp_client
   1. Create a script to loop through macros:
      ```bash
      for macro in gear.FCMacro flange.FCMacro; do
-         python freecad_mcp_client.py --run-macro $macro
+         python D:\FreeCAD\Mod\FreeCAD-MCP\freecad_mcp_client.py --run-macro $macro
      done
      ```
   2. Result: Models generated sequentially, logged in `freecad_mcp_log.txt`.
@@ -307,7 +310,7 @@ The `assets/` directory contains visual and demonstration resources for the Free
 - **table.png**: Example table model from CAD drawing recognition.
   ![Table Model](assets/table.png)
 - **freecad.mp4**: Demo video showcasing GUI panel, macro execution, and view switching.
-  Watch: [FreeCAD MCP Demo](assets/freecad.mp4) (click to download/view)
+  Watch: [FreeCAD MCP Demo](assets/freecad.mp4) (click to download/view). For embedded playback, view on YouTube: [FreeCAD MCP Demo](https://youtube.com/your-video-link) (replace with actual link after uploading).
 
 ## Contributing
 
