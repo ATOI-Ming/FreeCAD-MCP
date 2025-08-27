@@ -1,6 +1,6 @@
 # FreeCAD MCP Plugin
 
-The **FreeCAD MCP** plugin integrates the **Model Control Protocol (MCP)** into FreeCAD, enabling automation of model creation, macro execution, and view management through a server-client architecture. It provides a TCP server, a GUI control panel, and a client interface to streamline FreeCAD workflows, supporting tasks like running macros, adjusting views, and integrating with external tools (e.g., Claude, Cursor, Trace).
+The **FreeCAD MCP** plugin integrates the **Model Control Protocol (MCP)** into FreeCAD, enabling automation of model creation, macro execution, and view management through a server-client architecture. It provides a TCP server, a GUI control panel, and a client interface to streamline FreeCAD workflows, supporting tasks like running macros, adjusting views, and integrating with external tools (e.g., Claude, Cursor, Trace, CodeBuddy, cline).
 
 ![FreeCAD MCP Icon](assets/icon.svg)
 
@@ -98,8 +98,8 @@ Configure the MCP server to run `freecad_mcp_server.py` using FreeCAD's Python o
    {
        "mcpServers": {
            "freecad": {
-               "command": "C:\\ProgramData\\anaconda3\\python.exe",
-               "args": ["D:\\FreeCAD\\Mod\\FreeCADMCP\\src\\freecad_mcp_client.py"]
+               "command": "D:\\anaconda\\python.exe",
+               "args": ["D:\\FreeCAD\\Mod\\FreeCAD-MCP-main\\src\\freecad_mcp_client.py"]
            }
        }
    }
@@ -107,9 +107,9 @@ Configure the MCP server to run `freecad_mcp_server.py` using FreeCAD's Python o
 
    **Notes**:
    - Adjust paths for your system:
-     - Linux: `/home/<user>/anaconda3/bin/python`, `/home/<user>/.local/share/FreeCAD/Mod/FreeCADMCP/freecad_mcp_server.py`
-     - macOS: `/Users/<user>/anaconda3/bin/python`, `/Users/<user>/Library/Application Support/FreeCAD/Mod/FreeCADMCP/freecad_mcp_server.py`
-   - The configuration uses `freecad_mcp_server.py`.
+     - Linux: `/home/<user>/anaconda3/bin/python`, `/home/<user>/.local/share/FreeCAD/Mod/FreeCAD-MCP-main/src/freecad_mcp_client.py`
+     - macOS: `/Users/<user>/anaconda3/bin/python`, `/Users/<user>/Library/Application Support/FreeCAD/Mod/FreeCAD-MCP-main/freecad_mcp_client.py`
+   - The configuration uses `freecad_mcp_client.py`.
 
 2. **Run the Server**:
 
@@ -117,7 +117,7 @@ Configure the MCP server to run `freecad_mcp_server.py` using FreeCAD's Python o
    - **Command-Line Method**:
      ```bash
      conda activate freecad_mcp
-     python D:\FreeCAD\Mod\FreeCADMCP\freecad_mcp_server.py
+     python D:\FreeCAD\Mod\FreeCAD-MCP-main\freecad_mcp_server.py
      ```
 
 3. **Verify Server**:
@@ -151,11 +151,11 @@ Configure the MCP server to run `freecad_mcp_server.py` using FreeCAD's Python o
      ```
    - Run a macro:
      ```bash
-     python D:\FreeCAD\Mod\FreeCADMCP\freecad_mcp_client.py --run-macro path/to/macro.FCMacro
+     python D:\FreeCAD\Mod\FreeCAD-MCP-mian\src\freecad_mcp_client.py --run-macro path/to/macro.FCMacro
      ```
    - With parameters:
      ```bash
-     python D:\FreeCAD\Mod\FreeCADMCP\freecad_mcp_client.py --run-macro gear.FCMacro --params '{"radius": 10}'
+     python D:\FreeCAD\Mod\FreeCAD-MCP-mian\src\freecad_mcp_client.py --run-macro gear.FCMacro --params '{"radius": 10}'
      ```
 
 ### Remote Control
@@ -163,8 +163,8 @@ Configure the MCP server to run `freecad_mcp_server.py` using FreeCAD's Python o
 Use `freecad_mcp_client.py` to send commands to the server:
 
 ```bash
-python D:\FreeCAD\Mod\FreeCADMCP\freecad_mcp_client.py --set-view front
-python D:\FreeCAD\Mod\FreeCADMCP\freecad_mcp_client.py --get-report
+python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --set-view front
+python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --get-report
 ```
 
 ## Tool Functions
