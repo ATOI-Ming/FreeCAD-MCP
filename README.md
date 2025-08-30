@@ -90,7 +90,7 @@ Follow these steps to install and set up the FreeCAD MCP plugin.
    Install dependencies (already covered in Prerequisites, but repeated for clarity):
 
    ```bash
-   pip install mcp-server>=1.2.0 httpx>=0.24.1
+   python -m pip install mcp
    ```
 
 4. **Launch FreeCAD**:
