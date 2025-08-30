@@ -1,9 +1,9 @@
 [project]
-name = "freecad-mcp"
+name = "FreeCAD-MCP"
 version = "0.1.0"
 description = "FreeCAD integration through the Model Context Protocol"
 authors = [
-    {name = "ATOI-ming", email = "1747772673@qq.com"}
+    {name = "ATOI-ming", email = "1757772673@qq.com"}
 ]
 dependencies = [
     "mcp-server>=1.2.0",
@@ -29,5 +29,6 @@ dev = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/ATOI-Ming/freecad_mcp"
-"Bug Tracker" = "https://github.com/ATOI-Ming/freecad_mcp/issues"
+"Homepage" = "https://github.com/ATOI-Ming/FreeCAD-MCP"
+"Bug Tracker" = "https://github.com/ATOI-Ming/FreeCAD-MCP/issues"
+
