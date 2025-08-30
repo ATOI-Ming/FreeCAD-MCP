@@ -2,7 +2,9 @@
 
 The **FreeCAD MCP** plugin integrates the **Model Control Protocol (MCP)** into FreeCAD, enabling automation of model creation, macro execution, and view management through a server-client architecture. It provides an MCP server with a GUI control panel and a client interface to streamline FreeCAD workflows, supporting tasks like creating/running macros, adjusting views, and integrating with external tools (e.g., Claude, Cursor, Trace, CodeBuddy).
 
-![FreeCAD MCP Icon](assets/icon.svg)
+Watch the demo: 
+<img src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif" width="900">  
+Download: [FreeCAD MCP Demo MP4](assets/freecad.mp4)  
 
 ## Table of Contents
 
@@ -27,11 +29,8 @@ The FreeCAD MCP plugin (v0.1.0) offers:
 - **Logging**: Records messages and errors to `freecad_mcp_log.txt` and a GUI report browser (100-line limit).
 - **Workbench Integration**: Adds a `FreeCADMCPWorkbench` with toolbar/menu commands (`InitGui.py`).
 - **Visual Assets**: Includes workbench icon (`icon.svg`), example models (`gear.png`, `flange.png`, `boat.png`, `table.png`), and demo animation (`freecad.gif`).
-
-Watch the demo: 
-<img src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif" width="900">  
-Download: [FreeCAD MCP Demo MP4](assets/freecad.mp4)  
-
+ 
+![FreeCAD MCP Icon](assets/icon.svg)
 ## Installation
 
 Follow these steps to install and set up the FreeCAD MCP plugin.
