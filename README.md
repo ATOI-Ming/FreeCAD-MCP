@@ -50,7 +50,7 @@ Download the demo video: [FreeCAD MCP Demo MP4](assets/freecad.mp4)
 
 ### Prerequisites
 
-- **FreeCAD**: Version 0.21 or higher, [Download FreeCAD](https://www.freecad.org/download). Select the version for your operating system.
+- **FreeCAD**: Version 0.21 or higher, [Download FreeCAD](https://www.freecad.org/downloads.php?lang=zh_CN). Select the version for your operating system.
 - **Python**: Version 3.8+ (included with FreeCAD or installed via Anaconda).
 - **Anaconda** (recommended for dependency management): [Download Anaconda](https://www.anaconda.com/download). Select the version for your operating system.
 - **Python Dependencies**:
