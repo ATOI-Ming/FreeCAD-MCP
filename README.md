@@ -1,117 +1,107 @@
 # FreeCAD MCP Plugin
 
-The **FreeCAD MCP** plugin integrates the **Model Control Protocol (MCP)** into FreeCAD, enabling automation of model creation, macro execution, and view management through a server-client architecture. It provides an MCP server with a GUI control panel and a client interface to streamline FreeCAD workflows, supporting tasks like creating/running macros, adjusting views, and integrating with external tools (e.g., Claude, Cursor, Trace, CodeBuddy).
+The **FreeCAD MCP** plugin integrates the **Model Control Protocol (MCP)** into FreeCAD, enabling automation of model creation, macro execution, and view management through a server-client architecture. It provides a GUI control panel and a command-line client to streamline FreeCAD workflows, supporting tasks like creating/running macros, adjusting views, and integrating with external tools (e.g., Claude, Cursor, Trace, CodeBuddy).
 
-Watch the demo: 
-<img src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif" width="900">  
-Download: [FreeCAD MCP Demo MP4](assets/freecad.mp4)  
+![FreeCAD MCP Icon](assets/icon.svg)
 
 ## Table of Contents
 
 - [Features](#features)
+- [Quick Start](#quick-start)
 - [Installation](#installation)
 - [MCP Configuration](#mcp-configuration)
 - [Usage](#usage)
 - [Tool Functions](#tool-functions)
 - [Use Cases](#use-cases)
+- [External Tool Integration](#external-tool-integration)
 - [Assets](#assets)
+- [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [License](#license)
 
 ## Features
 
-The FreeCAD MCP plugin (v0.1.0) offers:
+The FreeCAD MCP plugin (v0.1.0) offers the following features:
 
-- **MCP Server**: Provides a GUI control panel (`FreeCADMCPPanel`) and processes commands like `create_macro`, `update_macro`, `run_macro`, `set_view`, and `get_report` (`freecad_mcp_server.py`).
-- **MCP Client**: Command-line tool to send commands via `stdio` or TCP, create/update/run `.FCMacro` files, validate code, and control FreeCAD remotely (`freecad_mcp_client.py`).
-- **Macro Normalization**: Automatically adds imports (`FreeCAD`, `FreeCADGui`, `Part`, `math`) and post-execution steps (recompute, view adjustment) for macros (`freecad_mcp_client.py`).
-- **GUI Control Panel**: Includes buttons to start/stop the server, clear logs, and switch views (front, top, right, axonometric) (`freecad_mcp_server.py`).
-- **Logging**: Records messages and errors to `freecad_mcp_log.txt` and a GUI report browser (100-line limit).
-- **Workbench Integration**: Adds a `FreeCADMCPWorkbench` with toolbar/menu commands (`InitGui.py`).
-- **Visual Assets**: Includes workbench icon (`icon.svg`), example models (`gear.png`, `flange.png`, `boat.png`, `table.png`), and demo animation (`freecad.gif`).
- 
-![FreeCAD MCP Icon](assets/icon.svg)
+- **MCP Server**: Provides a GUI control panel (`FreeCADMCPPanel`) and processes commands like `create_macro`, `update_macro`, `run_macro`, `set_view`, and `get_report` (implemented in `freecad_mcp_server.py`).
+- **MCP Client**: Command-line tool to send commands via `stdio` or TCP, manage `.FCMacro` files (create, update, run, validate), and control FreeCAD remotely (implemented in `freecad_mcp_client.py`).
+- **Macro Normalization**: Automatically adds imports (`FreeCAD`, `FreeCADGui`, `Part`, `math`) and post-execution steps (recompute, view adjustment) for macros.
+- **GUI Control Panel**: Includes buttons to start/stop the server, clear logs, and switch views (front, top, right, axonometric).
+- **Logging System**: Records messages and errors to `freecad_mcp_log.txt` in the temporary directory (e.g., `%TEMP%\freecad_mcp_log.txt`) and a GUI report browser (100-line limit).
+- **Workbench Integration**: Adds a `FreeCADMCPWorkbench` with toolbar and menu commands (implemented in `InitGui.py`).
+- **Visual Assets**: Includes workbench icon (`icon.svg`), example models (`gear.png`, `flange.png`, `boat.png`, `table.png`), and demo animation (`freecad.gif`, `freecad.mp4`).
+
+Watch the demo animation:
+<img src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif" width="900">
+Download the demo video: [FreeCAD MCP Demo MP4](assets/freecad.mp4)
+
+## Quick Start
+
+1. Install the plugin (see [Installation](#installation)).
+2. Launch FreeCAD and switch to the `FreeCAD MCP` workbench.
+3. Open the control panel (`FreeCAD_MCP_Show`) and click "Start Server."
+4. Run an example macro:
+   ```bash
+   python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro gear.FCMacro --params '{"radius": 15}'
+   ```
+5. View the result: A gear model is generated and displayed in axonometric view.
+
 ## Installation
-
-Follow these steps to install and set up the FreeCAD MCP plugin.
 
 ### Prerequisites
 
-- **FreeCAD**: Version 0.21 or later. [Download FreeCAD](https://www.freecad.org/downloads.php).
-- **Python**: Version 3.8+ (included with FreeCAD or via Anaconda).
-- **Anaconda** (recommended, for dependency management): [Download Anaconda](https://www.anaconda.com/products/distribution).
+- **FreeCAD**: Version 0.21 or higher, [Download FreeCAD](https://www.freecad.org/download). Select the version for your operating system.
+- **Python**: Version 3.8+ (included with FreeCAD or installed via Anaconda).
+- **Anaconda** (recommended for dependency management): [Download Anaconda](https://www.anaconda.com/download). Select the version for your operating system.
 - **Python Dependencies**:
   - Required packages: `mcp-server>=1.2.0`, `httpx>=0.24.1` (specified in `pyproject.toml`).
-  - **Installation** (in Anaconda environment):
+  - Installation commands:
     ```bash
+    # Create and activate Anaconda environment
+    conda create -n freecad_mcp python=3.8
     conda activate freecad_mcp
     pip install mcp-server>=1.2.0 httpx>=0.24.1
-    ```
-  - **Alternative** (without Anaconda, using system Python):
-    ```bash
+    # Or use system Python
     python -m pip install mcp-server>=1.2.0 httpx>=0.24.1
     ```
-  - **Verify Installation**:
+  - Verify installation:
     ```bash
-    pip show mcp-server
-    pip show httpx
+    pip show mcp-server httpx
     ```
-    Ensure `mcp-server` version is >=1.2.0 and `httpx` version is >=0.24.1. If not installed, repeat the `pip install` command.
+    Ensure `mcp-server` version is >=1.2.0 and `httpx` version is >=0.24.1.
 
 ### Installation Steps
 
 1. **Clone the Repository**:
-
    ```bash
    git clone https://github.com/ATOI-Ming/FreeCAD-MCP.git
    ```
 
 2. **Copy to FreeCAD Mod Directory**:
-
-   Move the `FreeCAD-MCP` folder to FreeCAD's Mod directory:
-
-   - **Windows**: `C:\Users\<YourUser>\AppData\Roaming\FreeCAD\Mod\`
-   - **Linux**: `~/.local/share/FreeCAD/Mod/`
-   - **macOS**: `~/Library/Application Support/FreeCAD/Mod/`
-
+   Copy the `FreeCAD-MCP` folder to:
+   - Windows: `D:\FreeCAD\Mod\FreeCAD-MCP`
+   - Linux: `~/.local/share/FreeCAD/Mod/FreeCAD-MCP`
+   - macOS: `~/Library/Application Support/FreeCAD/Mod/FreeCAD-MCP`
    ```bash
-   cp -r FreeCAD-MCP C:\Users\<YourUser>\AppData\Roaming\FreeCAD\Mod\
+   # Windows example
+   xcopy FreeCAD-MCP D:\FreeCAD\Mod\FreeCAD-MCP /E /H /C /I
    ```
+   **Note**: Adjust `D:\FreeCAD\Mod` based on your FreeCAD installation path.
 
-3. **Set Up Anaconda Environment** (recommended):
+3. **Launch FreeCAD**:
+   - Open FreeCAD and switch to the `FreeCAD MCP` workbench (icon: `assets/icon.svg`).
+   - Verify that `FreeCAD-MCP` is loaded in **Edit > Preferences > Add-ons**.
 
-   Create and activate a new Anaconda environment:
-
-   ```bash
-   conda create -n freecad_mcp python=3.8
-   conda activate freecad_mcp
-   ```
-
-   Install dependencies (already covered in Prerequisites, but repeated for clarity):
-
-   ```bash
-   python -m pip install mcp
-   ```
-
-4. **Launch FreeCAD**:
-
-   - Open FreeCAD.
-   - Switch to the `FreeCADMCPWorkbench` (icon: `assets/icon.svg`) from the workbench dropdown.
-
-5. **Verify Installation**:
-
-   - Confirm the `FreeCADMCPWorkbench` appears in FreeCAD.
-   - Click `FreeCAD_MCP_Show` to open the control panel or `FreeCAD_MCP_RunMacro` to test macro execution.
-   - Check `freecad_mcp_log.txt` in `D:\FreeCAD\Mod\FreeCAD-MCP-main\` for startup messages.
+4. **Verify Installation**:
+   - Click `FreeCAD_MCP_Show` to open the control panel.
+   - Check the temporary directory (e.g., `%TEMP%\freecad_mcp_log.txt`) for startup messages.
 
 ## MCP Configuration
 
-Configure the MCP client to run `freecad_mcp_client.py` using Anaconda's Python for `stdio` communication with FreeCAD.
+Configure the MCP client to communicate with FreeCAD via `stdio` or TCP.
 
 1. **Create Configuration File**:
-
-   Create a JSON file (e.g., `mcp_config.json`) in `D:\FreeCAD\Mod\FreeCAD-MCP-main\`:
-
+   Create `mcp_config.json` in `D:\FreeCAD\Mod\FreeCAD-MCP-main\src\`:
    ```json
    {
        "mcpServers": {
@@ -119,290 +109,224 @@ Configure the MCP client to run `freecad_mcp_client.py` using Anaconda's Python 
                "disabled": false,
                "timeout": 60,
                "type": "stdio",
-               "command": "D:\\anaconda\\python.exe",
+               "command": "D:\\Anaconda3\\python.exe",
                "args": ["D:\\FreeCAD\\Mod\\FreeCAD-MCP-main\\src\\freecad_mcp_client.py"]
            }
        }
    }
    ```
-
-   **Notes**:
-   - Adjust paths for your system:
-     - Linux: `/home/<user>/anaconda/bin/python`, `/home/<user>/.local/share/FreeCAD/Mod/FreeCAD-MCP-main/src/freecad_mcp_client.py`
-     - macOS: `/Users/<user>/anaconda/bin/python`, `/Users/<user>/Library/Application Support/FreeCAD/Mod/FreeCAD-MCP-main/src/freecad_mcp_client.py`
-   - The configuration runs `freecad_mcp_client.py` for `stdio` communication with FreeCAD.
+   **Note**:
+   - Adjust paths based on your system:
+     - **Anaconda Path**: e.g., `C:\Anaconda3\python.exe` (Windows), `/home/<user>/anaconda3/bin/python` (Linux), `/Users/<user>/anaconda3/bin/python` (macOS).
+     - **FreeCAD Mod Path**: e.g., `C:\Users\<YourUser>\AppData\Roaming\FreeCAD\Mod\FreeCAD-MCP` (Windows), `/home/<user>/.local/share/FreeCAD/Mod/FreeCAD-MCP` (Linux), `/Users/<user>/Library/Application Support/FreeCAD/Mod/FreeCAD-MCP` (macOS).
+   - For TCP communication, set `"type": "tcp"`, add `"host": "localhost"`, and `"port": 9876`.
 
 2. **Run the Server**:
-
-   - **GUI Method**: In `FreeCADMCPWorkbench`, click `FreeCAD_MCP_Show` to start the MCP server (`freecad_mcp_server.py`) and open the control panel.
+   - **GUI Method**: In the `FreeCAD MCP` workbench, click `FreeCAD_MCP_Show` and then "Start Server."
    - **Command-Line Method**:
      ```bash
      conda activate freecad_mcp
-     python D:\FreeCAD\Mod\FreeCAD-MCP-main\freecad_mcp_server.py
+     python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_server.py
      ```
 
 3. **Verify Server**:
-
-   - Check `freecad_mcp_log.txt` in `D:\FreeCAD\Mod\FreeCAD-MCP-main\` for startup messages (e.g., "Server started").
-   - Ensure the server is responsive to client commands (e.g., `freecad_mcp_client.py --get-report`).
+   - Check `%TEMP%\freecad_mcp_log.txt` for a "Server started" message.
+   - Test a client command:
+     ```bash
+     python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --get-report
+     ```
 
 ## Usage
 
-### Using the GUI Control Panel
+### GUI Usage
 
-1. In FreeCAD, switch to `FreeCADMCPWorkbench` (icon: `assets/icon.svg`).
+1. In FreeCAD, switch to the `FreeCAD MCP` workbench (icon: `assets/icon.svg`).
 2. Click `FreeCAD_MCP_Show` to open the control panel (`FreeCADMCPPanel`).
-3. Use the panel:
-   - **Start/Stop Server**: Starts or stops the MCP server (`freecad_mcp_server.py`).
-   - **Clear Logs**: Clears the report browser and `freecad_mcp_log.txt`.
-   - **View Buttons**: Switches to front, top, right, or axonometric view.
-4. Monitor logs in the report browser (updated every second via `QTimer`).
+3. Use the control panel:
+   - **Start/Stop Server**: Control the MCP server.
+   - **Clear Logs**: Clear the report browser and `%TEMP%\freecad_mcp_log.txt`.
+   - **View Switching**: Select front, top, right, or axonometric views.
+4. Run a macro:
+   - Click `FreeCAD_MCP_RunMacro`, select an `.FCMacro` file, and execute it with automatic normalization.
 
-### Running Macros
+### Command-Line Usage
 
-1. **GUI Method**:
-   - In `FreeCADMCPWorkbench`, click `FreeCAD_MCP_RunMacro`.
-   - Select a `.FCMacro` file using the file dialog.
-   - The macro runs with automatic normalization (adds imports, recomputes document, adjusts view).
-
-2. **Command-Line Method**:
-   - Activate Anaconda environment:
-     ```bash
-     conda activate freecad_mcp
-     ```
-   - Run a macro:
-     ```bash
-     python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro path/to/macro.FCMacro
-     ```
-   - With parameters:
-     ```bash
-     python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro gear.FCMacro --params '{"radius": 10}'
-     ```
-
-### Remote Control
-
-Use `freecad_mcp_client.py` to send commands to the MCP server:
-
-```bash
-python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --set-view 7
-python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --get-report
-```
+1. Activate the Anaconda environment:
+   ```bash
+   conda activate freecad_mcp
+   ```
+2. Run client commands:
+   ```bash
+   python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py <command>
+   ```
+   Examples:
+   - Create macro: `--create-macro my_macro --template-type part`
+   - Run macro: `--run-macro my_macro.FCMacro --params '{"radius": 10}'`
+   - Set view: `--set-view '{"view_type": "7"}'`
+   - Get report: `--get-report`
 
 ## Tool Functions
 
-The plugin provides the following tool functions, implemented in `freecad_mcp_client.py` (for sending commands via `stdio` or TCP to `localhost:9876`) and processed by `freecad_mcp_server.py` (for handling commands in FreeCAD). These functions enable remote control of FreeCAD for macro operations, code validation, and view adjustments.
+The following tool functions are provided by `freecad_mcp_client.py`, sending commands via `stdio` or TCP (`localhost:9876`), processed by `freecad_mcp_server.py`.
 
-### Main Tool Functions
+| Function              | Parameters                              | Description                                                          |
+|-----------------------|-----------------------------------------|----------------------------------------------------------------------|
+| `create_macro`        | `macro_name`, `template_type`           | Creates an `.FCMacro` file, validates name (letters, numbers, underscores, hyphens), supports templates (`default`, `basic`, `part`, `sketch`). |
+| `update_macro`        | `macro_name`, `code`                    | Updates macro content, auto-adds `FreeCAD`, `FreeCADGui`, `Part`, `math` imports. |
+| `run_macro`           | `macro_path`, `params` (optional)       | Runs a macro, normalizes code, recomputes document, adjusts to axonometric view. |
+| `validate_macro_code` | `macro_name` (optional), `code` (optional) | Validates macro code syntax, returns success or error (with traceback). |
+| `set_view`            | `params` (e.g., `{"view_type": "7"}`)  | Sets view: `1` (front), `2` (top), `3` (right), `7` (axonometric).   |
+| `get_report`          | None                                    | Retrieves server logs (from `%TEMP%\freecad_mcp_log.txt` and report browser). |
 
-- **create_macro**:
-  - **Description**: Creates a new FreeCAD macro file (`.FCMacro`) with a specified template.
-  - **Parameters**:
-    - `macro_name`: Name of the macro file (e.g., `my_macro.FCMacro`).
-    - `template_type`: Template type (`default`, `basic`, `part`, `sketch`).
-  - **Usage**:
-    ```bash
-    python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --create-macro my_macro.FCMacro --template-type default
-    ```
-  - **Output**: JSON object confirming macro creation or error (e.g., `{"status": "success", "result": "Macro created"}` or `{"status": "error", "message": "..."}`).
-  - **Implementation**:
-    - Client (`freecad_mcp_client.py`): Generates macro file with predefined template code, sends creation request via `stdio` or TCP.
-    - Server (`freecad_mcp_server.py`): Processes request (assumed via `handle_create_macro`).
+### Examples
 
-- **update_macro**:
-  - **Description**: Updates the content of an existing FreeCAD macro file (`.FCMacro`).
-  - **Parameters**:
-    - `macro_name`: Name of the macro file to update (e.g., `my_macro.FCMacro`).
-    - `code`: New code content for the macro.
-  - **Usage**:
-    ```bash
-    python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --update-macro my_macro.FCMacro --code "import FreeCAD\nApp.newDocument()"
-    ```
-  - **Output**: JSON object confirming update or error (e.g., `{"status": "success", "result": "Macro updated"}` or `{"status": "error", "message": "..."}`).
-  - **Implementation**:
-    - Client: Sends update request with new code via `stdio` or TCP.
-    - Server: Processes request (assumed via `handle_update_macro`).
+- **Create Macro**:
+  ```bash
+  python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --create-macro gear --template-type part
+  ```
+  Output: `{"status": "success", "result": "Macro created"}`
 
-- **run_macro**:
-  - **Description**: Executes a FreeCAD macro file, normalizing code by adding imports (`FreeCAD`, `FreeCADGui`, `Part`, `math`) and post-execution steps (recompute document, set axonometric view, fit view).
-  - **Parameters**:
-    - `macro_path`: Path to the `.FCMacro` file (e.g., `path/to/macro.FCMacro`).
-    - `params`: Optional JSON string for macro parameters (e.g., `{"radius": 10}`).
-  - **Usage**:
-    ```bash
-    python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro macro.FCMacro --params '{"radius": 10}'
-    ```
-  - **Output**: JSON object with execution result or error, including traceback if failed (e.g., `{"status": "success", "result": {...}}` or `{"status": "error", "message": "...", "result": {"traceback": "..."}}`).
-  - **Implementation**:
-    - Client: Normalizes macro code via `normalize_macro_code`, sends `{"type": "run_macro", "params": {"code": normalized_code, ...}}` via `stdio` or TCP.
-    - Server: Executes normalized code via `handle_run_macro`, returns result.
+- **Update Macro**:
+  ```bash
+  python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --update-macro gear --code "import FreeCAD, Part\nradius = 10\ngear = Part.makeCylinder(radius, 5)\nPart.show(gear)"
+  ```
+  Output: `{"status": "success", "result": "Macro updated"}`
 
-- **validate_macro_code**:
-  - **Description**: Validates the syntax and runtime correctness of a FreeCAD macro file or code snippet.
-  - **Parameters**:
-    - `macro_name`: Name of the macro file (e.g., `my_macro.FCMacro`) or `code` (direct code string).
-  - **Usage**:
-    ```bash
-    python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --validate-macro-code macro.FCMacro
-    ```
-  - **Output**: JSON object indicating validation result or error (e.g., `{"status": "success"}` or `{"status": "error", "message": "..."}`).
-  - **Implementation**:
-    - Client: Parses code using `ast` or try-except (inferred from `run_macro` error handling), checks syntax and imports.
-    - Server: May assist in validation (assumed via `handle_validate_macro_code`).
+- **Run Macro**:
+  ```bash
+  python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro gear.FCMacro --params '{"radius": 15}'
+  ```
+  Output: `{"status": "success", "result": {...}}`
 
-- **set_view**:
-  - **Description**: Adjusts the FreeCAD 3D view to a specified perspective (front, top, right, or axonometric).
-  - **Parameters**:
-    - `view_type`: View type (`1` for front, `2` for top, `3` for right, `7` for axonometric).
-  - **Usage**:
-    ```bash
-    python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --set-view 7
-    ```
-  - **Output**: JSON object confirming view change or error (e.g., `{"status": "success", "result": "view set to axonometric"}` or `{"status": "error", "message": "Invalid view type"}`).
-  - **Implementation**:
-    - Client: Validates `view_type` (1, 2, 3, 7), sends `{"type": "set_view", "params": {"view_type": view_type}}` via `stdio` or TCP.
-    - Server: Adjusts view via `handle_set_view`, returns confirmation.
+- **Validate Code**:
+  ```bash
+  python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --validate-macro-code gear --code "import FreeCAD\nApp.newDocument()"
+  ```
+  Output: `{"status": "success"}`
 
-- **get_report**:
-  - **Description**: Retrieves execution and validation reports from `freecad_mcp_log.txt`.
-  - **Parameters**: None.
-  - **Usage**:
-    ```bash
-    python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --get-report
-    ```
-  - **Output**: JSON object containing log content (e.g., `{"status": "success", "result": {...}}`).
-  - **Implementation**:
-    - Client: Sends `{"type": "get_report", "params": {}}` via `stdio` or TCP.
-    - Server: Reads log file via `handle_get_report`, returns content.
+- **Set View**:
+  ```bash
+  python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --set-view '{"view_type": "7"}'
+  ```
+  Output: `{"status": "success", "result": "view set to axonometric"}`
 
-### Auxiliary Functions
-
-- **Logging System**:
-  - **Description**: Logs operations and errors to `freecad_mcp_log.txt` and the GUI report browser (100-line limit).
-  - **Implementation**:
-    - Server: Uses `log_message` for standard messages and `log_error` for errors with HTML formatting in the GUI.
-    - Logs include timestamps and are appended to the file and displayed in the report browser.
-
-- **Server Management**:
-  - **Description**: Starts/stops the MCP server, listening on `localhost:9876` for TCP connections.
-  - **Implementation**:
-    - Server: `FreeCADMCPServer` class manages server lifecycle (`start`, `stop` methods).
-    - GUI: `FreeCADMCPPanel` provides start/stop buttons.
-
-- **GUI Panel**:
-  - **Description**: Provides a graphical control panel (`FreeCADMCPPanel`) for server control, log management, and view switching.
-  - **Implementation**:
-    - Server: Uses `PySide2` to create a dialog with buttons for starting/stopping the server, clearing logs, and switching views (front, top, right, axonometric).
-    - Updated every second via `QTimer` for real-time log display.
-
-- **Error Handling**:
-  - **Description**: Captures and reports exceptions during command execution, validation, and server operations.
-  - **Implementation**:
-    - Client: Uses `try-except` to catch JSON parsing, socket connection, and execution errors, returning JSON error objects with tracebacks.
-    - Server: Logs errors via `log_error`, displays in GUI with red HTML formatting.
+- **Get Report**:
+  ```bash
+  python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --get-report
+  ```
+  Output: `{"status": "success", "result": {...}}`
 
 ## Use Cases
 
-### 1. Automating Gear Model Creation
+1. **Automated Gear Model Creation**:
+   - **Scenario**: Generate a parametric gear model for engineering design.
+   - **Steps**:
+     1. Create macro: `--create-macro gear --template-type part`
+     2. Update macro: `--update-macro gear --code "import FreeCAD, Part\nradius = 15\ngear = Part.makeCylinder(radius, 5)\nPart.show(gear)"`
+     3. Run macro: `--run-macro gear.FCMacro --params '{"radius": 15}'`
+   - **Result**: Gear model generated, displayed in axonometric view.
+   - **Output**:
+     ![Gear Model](assets/gear.png)
 
-- **Scenario**: Create a gear model programmatically for engineering design.
-- **Steps**:
-  1. Create a macro file:
-     ```bash
-     python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --create-macro gear.FCMacro --template-type part
-     ```
-  2. Update the macro:
-     ```bash
-     python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --update-macro gear.FCMacro --code "import FreeCAD, Part\nradius = 10\ngear = Part.makeCylinder(radius, 5)\nPart.show(gear)"
-     ```
-  3. Run the macro:
-     ```bash
-     python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro gear.FCMacro --params '{"radius": 15}'
-     ```
-  4. Result: Gear model created, recomputed, and displayed in axonometric view.
-- **Output**:
-  ![Gear Model](assets/gear.png)
+2. **Generating a Flange Model**:
+   - **Scenario**: Automate creation of a flange with holes for mechanical design.
+   - **Steps**: Run macro: `--run-macro flange.FCMacro`
+   - **Result**: Flange model generated with automatic normalization.
+   - **Output**:
+     ![Flange Model](assets/flange.png)
 
-### 2. Generating a Flange Model
+3. **Text-Based Model Generation**:
+   - **Scenario**: Generate a boat model from a text description (e.g., "create a boat with a curved hull").
+   - **Steps**:
+     1. Use Claude to generate `boat.FCMacro`.
+     2. Run macro: `--run-macro boat.FCMacro`
+   - **Result**: Boat model generated with automatic view adjustment.
+   - **Output**:
+     ![Boat Model](assets/boat.png)
 
-- **Scenario**: Automate flange creation with holes for mechanical design.
-- **Steps**:
-  1. Create and run a macro via GUI (`FreeCAD_MCP_RunMacro`) or command line:
-     ```bash
-     python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro flange.FCMacro
-     ```
-  2. Result: Flange model created with normalized code.
-- **Output**:
-  ![Flange Model](assets/flange.png)
+4. **CAD Drawing Recognition**:
+   - **Scenario**: Recreate a table model from a CAD drawing.
+   - **Steps**:
+     1. Use Trace to convert drawing to `table.FCMacro`.
+     2. Run macro: `--run-macro table.FCMacro`
+   - **Result**: Table model generated.
+   - **Output**:
+     ![Table Model](assets/table.png)
 
-### 3. Text-Based Model Generation
-
-- **Scenario**: Generate a boat model from a text description (e.g., "create a boat with a curved hull").
-- **Steps**:
-  1. Use an external tool (e.g., Claude) to generate `boat.FCMacro`.
-  2. Run the macro:
-     ```bash
-     python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro boat.FCMacro
-     ```
-  3. Result: Boat model created with automatic imports and view adjustment.
-- **Output**:
-  ![Boat Model](assets/boat.png)
-
-### 4. CAD Drawing Recognition
-
-- **Scenario**: Recreate a table model from a CAD drawing.
-- **Steps**:
-  1. Convert CAD drawing to `table.FCMacro` using a tool like Trace.
-  2. Run via GUI or command line:
-     ```bash
-     python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro table.FCMacro
-     ```
-  3. Result: Table model recreated in FreeCAD.
-- **Output**:
-  ![Table Model](assets/table.png)
-
-### 5. Batch Processing Models
-
-- **Scenario**: Automate creation of multiple models (e.g., gear and flange).
-- **Steps**:
-  1. Create a script to loop through macros:
+5. **Batch Processing Models**:
+   - **Scenario**: Automate creation of multiple models (e.g., gear and flange).
+   - **Steps**:
      ```bash
      for macro in gear.FCMacro flange.FCMacro; do
          python D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py --run-macro $macro
      done
      ```
-  2. Result: Models generated sequentially, logged in `freecad_mcp_log.txt`.
+   - **Result**: Models generated sequentially, logged to `%TEMP%\freecad_mcp_log.txt`.
+   - **Output**: See `gear.png` and `flange.png`.
+
+## External Tool Integration
+
+FreeCAD MCP supports integration with external tools to enhance model generation:
+
+- **Claude**: AI model for generating `.FCMacro` files from text descriptions.
+  - **Example**: Input "create a gear with 10mm radius," generates:
+    ```python
+    import FreeCAD, Part
+    radius = 10
+    gear = Part.makeCylinder(radius, 5)
+    Part.show(gear)
+    ```
+    Save as `gear.FCMacro`, run: `--run-macro gear.FCMacro`.
+- **Trace**: CAD drawing processing tool to convert drawings to `.FCMacro` files.
+  - **Example**: Convert a table drawing to `table.FCMacro`, run: `--run-macro table.FCMacro`.
+- **Cursor/CodeBuddy**: Code editing tools for writing and debugging macro code.
+  - **Example**: Edit `flange.FCMacro` in Cursor, update: `--update-macro flange.FCMacro --code "<code>"`.
 
 ## Assets
 
-The `assets/` directory contains visual and demonstration resources for the FreeCAD MCP plugin:
+The `assets/` directory contains the following resources:
 
-- **icon.svg**: Workbench and command icon for `FreeCADMCPWorkbench`, used in `InitGui.py` and `package.xml`.
+- **icon.svg**: Icon for `FreeCADMCPWorkbench`, used in `InitGui.py` and `package.xml`.
   ![FreeCAD MCP Icon](assets/icon.svg)
-- **gear.png**: Example gear model created via `run_macro`.
+- **gear.png**: Example gear model.
   ![Gear Model](assets/gear.png)
-- **flange.png**: Example flange model for engineering design.
+- **flange.png**: Example flange model.
   ![Flange Model](assets/flange.png)
-- **boat.png**: Example boat model from text-based generation.
+- **boat.png**: Example boat model.
   ![Boat Model](assets/boat.png)
-- **table.png**: Example table model from CAD drawing recognition.
+- **table.png**: Example table model.
   ![Table Model](assets/table.png)
-- **freecad.gif**: Demo animation showcasing GUI panel, macro execution, and view switching.
-  Watch:
-  <img src="https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif" width="900">
-- **freecad.mp4**: Original demo video, available for download.
+- **freecad.gif**: Demo animation showing GUI panel, macro execution, and view switching.
+  ![Demo Animation](https://raw.githubusercontent.com/ATOI-Ming/FreeCAD-MCP/main/assets/freecad.gif)
+- **freecad.mp4**: Demo video, available for download.
   Download: [FreeCAD MCP Demo MP4](assets/freecad.mp4)
 
+## Troubleshooting
+
+- **Server Fails to Start**:
+  - **Issue**: Port 9876 is in use.
+  - **Solution**: Check port (`netstat -ano | findstr 9876`), change port, or terminate conflicting process.
+- **Client Connection Failure**:
+  - **Issue**: Incorrect paths in `mcp_config.json`.
+  - **Solution**: Verify `command` and `args` paths, e.g., `D:\Anaconda3\python.exe` and `D:\FreeCAD\Mod\FreeCAD-MCP-main\src\freecad_mcp_client.py`.
+- **Macro Execution Errors**:
+  - **Issue**: Syntax errors or missing imports in macro code.
+  - **Solution**: Use `--validate-macro-code` to check code, review traceback in `%TEMP%\freecad_mcp_log.txt`.
+- **Log File Not Generated**:
+  - **Issue**: No write permission in temporary directory.
+  - **Solution**: Check permissions for `%TEMP%\freecad_mcp_log.txt`, or specify another path in `freecad_mcp_server.py`.
+- **More Help**: Submit issues on GitHub ([Bug Tracker](https://github.com/ATOI-Ming/FreeCAD-MCP/issues)).
 
 ## Contributing
 
-Contributions are welcome! To contribute:
+Contributions are welcome! Follow these steps:
 
 1. Fork the repository: `https://github.com/ATOI-Ming/FreeCAD-MCP`.
 2. Create a branch: `git checkout -b feature/your-feature`.
 3. Commit changes: `git commit -m "Add your feature"`.
 4. Push and create a Pull Request.
 
-Please follow the [Code of Conduct](CODE_OF_CONDUCT.md) (to be added).
+Please adhere to the Code of Conduct (to be added, see [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)).
 
 ## License
 
