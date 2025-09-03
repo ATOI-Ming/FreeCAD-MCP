@@ -38,10 +38,10 @@ def log_error(message):
     App.Console.PrintError(message + "\n")
     if panel_instance and panel_instance.report_browser:
         current_text = panel_instance.report_browser.toPlainText().splitlines()
-        current_text.append(f"<font color='red'>{message}</font>")
+        current_text.append(message)  # 修复：统一使用纯文本格式
         if len(current_text) > FreeCADMCPServer().max_log_lines:
             current_text = current_text[-FreeCADMCPServer().max_log_lines:]
-        panel_instance.report_browser.setHtml("\n".join(current_text))
+        panel_instance.report_browser.setPlainText("\n".join(current_text))
         panel_instance.report_browser.verticalScrollBar().setValue(
             panel_instance.report_browser.verticalScrollBar().maximum()
         )
@@ -60,8 +60,15 @@ class FreeCADMCPServer:
         self.clients = []
         self.buffer = {}
         self.timer = None
-        self.log_file = os.path.join(os.path.expanduser("~"), "AppData", "Local", "Temp", "freecad_mcp_log.txt")
+        # 修复：使用更通用的临时目录路径
+        import tempfile
+        self.log_file = os.path.join(tempfile.gettempdir(), "freecad_mcp_log.txt")
         self.max_log_lines = 100
+        self.connection_timeout = 30  # 连接超时设置
+        self.max_clients = 5  # 最大客户端连接数
+        self.buffer_size = 32768  # 缓冲区大小
+        self.max_buffer_size = 1024 * 1024  # 最大缓冲区大小(1MB)
+        self.client_timeouts = {}  # 客户端超时跟踪
 
     def start(self):
         if not App.GuiUp:
@@ -102,82 +109,122 @@ class FreeCADMCPServer:
         if not self.running:
             return
         try:
+            # 接受新连接
             try:
                 client, address = self.socket.accept()
-                client.setblocking(False)
-                self.clients.append(client)
-                self.buffer[client] = b''
-                log_message(f"连接到客户端: {address}")
+                # 检查最大连接数限制
+                if len(self.clients) >= self.max_clients:
+                    log_message(f"达到最大连接数限制，拒绝连接: {address}")
+                    client.close()
+                else:
+                    client.setblocking(False)
+                    client.settimeout(self.connection_timeout)  # 设置超时
+                    self.clients.append(client)
+                    self.buffer[client] = b''
+                    self.client_timeouts[client] = time.time()  # 记录连接时间
+                    log_message(f"连接到客户端: {address}")
             except BlockingIOError:
                 pass
+            
+            # 处理现有客户端
             for client in self.clients[:]:
                 try:
-                    data = client.recv(32768)
+                    data = client.recv(self.buffer_size)
                     if data:
                         self.buffer[client] += data
+                        # 检查缓冲区大小，防止内存溢出
+                        if len(self.buffer[client]) > self.max_buffer_size:
+                            log_error("客户端数据过大，断开连接")
+                            self._cleanup_client(client)
+                            continue
+                        
+                        # 更新客户端活动时间
+                        self.client_timeouts[client] = time.time()
+                        
                         try:
                             command = json.loads(self.buffer[client].decode('utf-8'))
                             self.buffer[client] = b''
                             response = self.execute_command(command)
-                            response_json = json.dumps(response)
+                            response_json = json.dumps(response, ensure_ascii=False)
                             client.sendall(response_json.encode('utf-8'))
                         except json.JSONDecodeError:
+                            # 数据可能不完整，继续等待
                             pass
+                        except UnicodeDecodeError as e:
+                            log_error(f"编码错误: {str(e)}")
+                            self._cleanup_client(client)
                     else:
                         log_message("客户端断开连接")
-                        client.close()
-                        self.clients.remove(client)
-                        del self.buffer[client]
+                        self._cleanup_client(client)
                 except BlockingIOError:
                     pass
                 except Exception as e:
-                    log_error(f"接收数据错误: {str(e)}")
-                    client.close()
-                    self.clients.remove(client)
-                    del self.buffer[client]
+                    log_error(f"处理客户端数据错误: {str(e)}")
+                    self._cleanup_client(client)
+            
+            # 检查客户端超时
+            self._check_client_timeouts()
         except Exception as e:
-            log_error(f"服务器错误: {str(e)}")
+            log_error(f"服务器处理错误: {str(e)}")
+
+    def _cleanup_client(self, client):
+        """清理客户端连接的辅助方法"""
+        try:
+            if client in self.clients:
+                self.clients.remove(client)
+            if client in self.buffer:
+                del self.buffer[client]
+            if client in self.client_timeouts:
+                del self.client_timeouts[client]
+            client.close()
+        except Exception as e:
+            log_error(f"清理客户端连接时出错: {str(e)}")
+    
+    def _check_client_timeouts(self):
+        """检查并清理超时的客户端连接"""
+        current_time = time.time()
+        timeout_clients = []
+        
+        for client, last_activity in self.client_timeouts.items():
+            if current_time - last_activity > self.connection_timeout:
+                timeout_clients.append(client)
+        
+        for client in timeout_clients:
+            log_message("客户端连接超时，断开连接")
+            self._cleanup_client(client)
 
     def execute_command(self, command):
-        try:
-            cmd_type = command.get("type")
-            params = command.get("params", {})
-            handlers = {
-                "create_macro": self.handle_create_macro,
-                "update_macro": self.handle_update_macro,
-                "run_macro": self.handle_run_macro,
-                "validate_macro_code": self.handle_validate_macro_code,
-                "set_view": self.handle_set_view,
-                "get_report": self.handle_get_report
-            }
-            if cmd_type in handlers:
-                log_message(f"执行 {cmd_type} 处理器")
-                result = handlers[cmd_type](**params)
-                return {"status": "success", "result": result}
-            else:
-                return {"status": "error", "message": f"未知命令类型: {cmd_type}"}
-        except Exception as e:
-            log_error(f"执行命令错误: {str(e)}")
-            return {"status": "error", "message": str(e), "traceback": traceback.format_exc()}
+        command_type = command.get("type")
+        params = command.get("params", {})
+        if command_type == "create_macro":
+            return self.handle_create_macro(params.get("macro_name"), params.get("template_type"))
+        elif command_type == "update_macro":
+            return self.handle_update_macro(params.get("macro_name"), params.get("code"))
+        elif command_type == "run_macro":
+            return self.handle_run_macro(params.get("macro_path"), params.get("params"))
+        elif command_type == "validate_macro_code":
+            return self.handle_validate_macro_code(params.get("macro_name"), params.get("code"))
+        elif command_type == "set_view":
+            return self.handle_set_view(params.get("view_type"))
+        elif command_type == "get_report":
+            return self.handle_get_report()
+        return {"result": "error", "message": f"未知命令: {command_type}"}
 
     def handle_create_macro(self, macro_name, template_type="default"):
         try:
             macro_dir = App.getUserMacroDir()
-            if not os.path.exists(macro_dir):
-                os.makedirs(macro_dir)
             macro_path = os.path.join(macro_dir, f"{macro_name}.FCMacro")
-            if os.path.exists(macro_path):
-                return {"result": "error", "message": f"宏文件 '{macro_path}' 已存在"}
-            template = {
+            template_map = {
                 "default": "# FreeCAD Macro\n",
-                "basic": "# FreeCAD Macro\nimport FreeCAD as App\ndoc = App.ActiveDocument\n",
-                "part": "# FreeCAD Macro\nimport FreeCAD as App\nimport Part\ndoc = App.ActiveDocument\n",
-                "sketch": "# FreeCAD Macro\nimport FreeCAD as App\nimport Sketcher\ndoc = App.ActiveDocument\n"
-            }.get(template_type, "# FreeCAD Macro\n")
-            with open(macro_path, 'w', encoding='utf-8', newline='\n') as f:
+                "basic": "import FreeCAD as App\nimport FreeCADGui as Gui\n\n",
+                "part": "import FreeCAD as App\nimport FreeCADGui as Gui\nimport Part\n\n",
+                "sketch": "import FreeCAD as App\nimport FreeCADGui as Gui\nimport Sketcher\n\n"
+            }
+            template = template_map.get(template_type, "# FreeCAD Macro\n")
+            with open(macro_path, "w", encoding='utf-8') as f:
                 f.write(template)
-            log_message(f"创建宏文件: {macro_path}，模板: {template_type}")
-            return {"result": "success", "macro_path": macro_path}
+            log_message(f"宏文件创建成功: {macro_path}")
+            return {"result": "success", "message": f"宏文件创建成功: {macro_path}"}
         except Exception as e:
             log_error(f"创建宏文件错误: {str(e)}")
             return {"result": "error", "message": str(e), "traceback": traceback.format_exc()}
@@ -186,130 +233,203 @@ class FreeCADMCPServer:
         try:
             macro_dir = App.getUserMacroDir()
             macro_path = os.path.join(macro_dir, f"{macro_name}.FCMacro")
-            if not os.path.exists(macro_path):
-                return {"result": "error", "message": f"宏文件 '{macro_path}' 未找到"}
-            with open(macro_path, 'w', encoding='utf-8', newline='\n') as f:
+            with open(macro_path, "w", encoding='utf-8') as f:
                 f.write(code)
-            with open(macro_path, 'r', encoding='utf-8') as f:
-                written_code = f.read()
-                log_message(f"更新宏文件: {macro_path}\n内容:\n{written_code}")
-            return {"result": "success", "macro_path": macro_path}
+            log_message(f"宏文件更新成功: {macro_path}")
+            return {"result": "success", "message": f"宏文件更新成功: {macro_path}"}
         except Exception as e:
             log_error(f"更新宏文件错误: {str(e)}")
             return {"result": "error", "message": str(e), "traceback": traceback.format_exc()}
 
-    def handle_run_macro(self, macro_path, params=None):
+    def handle_run_macro(self, macro_path, params):
         try:
-            macro_path = os.path.normpath(macro_path)
-            if not os.path.exists(macro_path):
-                return {"result": "error", "message": f"宏文件 '{macro_path}' 未找到"}
-            if not App.GuiUp:
-                return {"result": "error", "message": "FreeCAD GUI 未初始化"}
+            # 智能路径处理 - 支持相对路径和绝对路径
+            original_macro_path = macro_path
+            resolved_path = None
+            
+            # 路径解析策略
+            search_paths = []
+            
+            if os.path.isabs(macro_path):
+                # 绝对路径直接使用
+                search_paths.append(macro_path)
+            else:
+                # 相对路径多重查找策略
+                macro_dir = App.getUserMacroDir()
+                
+                # 1. 在FreeCAD宏目录中查找
+                search_paths.append(os.path.join(macro_dir, macro_path))
+                
+                # 2. 如果没有.FCMacro扩展名，自动添加
+                if not macro_path.endswith('.FCMacro'):
+                    search_paths.append(os.path.join(macro_dir, f"{macro_path}.FCMacro"))
+                
+                # 3. 在当前工作目录查找
+                search_paths.append(os.path.abspath(macro_path))
+                
+                # 4. 在项目目录查找
+                project_dir = os.path.dirname(__file__)
+                search_paths.append(os.path.join(project_dir, macro_path))
+            
+            # 按优先级查找文件
+            for path in search_paths:
+                if os.path.exists(path):
+                    resolved_path = path
+                    log_message(f"找到宏文件: {resolved_path}")
+                    break
+            
+            # 验证宏文件路径
+            if not resolved_path:
+                search_info = "\n".join([f"  - {path}" for path in search_paths])
+                log_error(f"宏文件不存在: {original_macro_path}\n搜索路径:\n{search_info}")
+                return {"result": "error", "message": f"宏文件不存在: {original_macro_path}"}
+            
+            macro_path = resolved_path
+            
+            if not macro_path.endswith('.FCMacro'):
+                log_error(f"无效的宏文件扩展名: {macro_path}")
+                return {"result": "error", "message": "宏文件必须以.FCMacro结尾"}
+            
+            # 获取和验证文档名称
+            doc_name = self._get_document_name(macro_path, params)
+            
+            # 文档管理
+            doc_created = False
+            try:
+                existing_doc = App.getDocument(doc_name) if doc_name in App.listDocuments() else None
+                
+                if existing_doc:
+                    App.setActiveDocument(doc_name)
+                    log_message(f"使用现有文档: {doc_name}")
+                else:
+                    App.newDocument(doc_name)
+                    App.setActiveDocument(doc_name)
+                    doc_created = True
+                    log_message(f"创建新文档: {doc_name}")
+                
+                # 确保活动文档有效
+                if not App.ActiveDocument:
+                    raise Exception("无法设置活动文档")
+                
+                # 执行宏文件
+                self._execute_macro_file(macro_path)
+                
+                # 重新计算和更新视图
+                self._update_document_view()
+                
+                log_message(f"宏文件 {macro_path} 执行成功于文档 {doc_name}")
+                return {"result": "success", "message": f"宏执行成功于文档 {doc_name}", "document": doc_name}
+                
+            except Exception as e:
+                # 如果是新创建的文档且执行失败，清理文档
+                if doc_created and App.ActiveDocument and App.ActiveDocument.Name == doc_name:
+                    try:
+                        App.closeDocument(doc_name)
+                        log_message(f"清理失败的文档: {doc_name}")
+                    except:
+                        pass
+                raise e
+                
+        except Exception as e:
+            log_error(f"运行宏错误: {str(e)}")
+            return {"result": "error", "message": str(e), "traceback": traceback.format_exc()}
+
+    def _get_document_name(self, macro_path, params):
+        """获取并验证文档名称"""
+        import re
+        
+        if params and "doc_name" in params and params["doc_name"]:
+            doc_name = params["doc_name"]
+        elif params is None and App.ActiveDocument:
+            # GUI 调用，使用当前活动文档
+            doc_name = App.ActiveDocument.Name
+        else:
+            # 使用宏文件名
+            doc_name = os.path.splitext(os.path.basename(macro_path))[0]
+        
+        # 确保文档名称合法
+        doc_name = re.sub(r'[^\w\-]', '_', doc_name)
+        if not doc_name or doc_name.isdigit():
+            doc_name = f"Document_{doc_name}"
+        
+        return doc_name
+
+    def _execute_macro_file(self, macro_path):
+        """安全执行宏文件"""
+        try:
             with open(macro_path, 'r', encoding='utf-8') as f:
-                code = f.read()
-            namespace = {
+                macro_code = f.read()
+            
+            # 创建安全的执行环境
+            safe_globals = {
                 "App": App,
                 "Gui": Gui,
-                "FreeCAD": App,
-                "FreeCADGui": Gui,
-                "Part": __import__("Part"),
-                "math": __import__("math"),
-                "time": __import__("time"),
-                "params": params or {}
+                "__name__": "__main__",
+                "__file__": macro_path
             }
-            result = [None]
-            def execute_in_main_thread():
-                try:
-                    if not App.ActiveDocument:
-                        App.newDocument("ComplexFlangeModel")
-                        log_message("创建新文档: ComplexFlangeModel")
-                    namespace["doc"] = App.ActiveDocument
-                    log_message(f"运行宏文件: {macro_path}, ActiveDocument: {App.ActiveDocument.Name}")
-                    before_objects = set(obj.Name for obj in App.ActiveDocument.Objects)
-                    exec(code, namespace)
-                    after_objects = set(obj.Name for obj in App.ActiveDocument.Objects)
-                    result[0] = {"result": "success", "affected_objects": list(after_objects - before_objects)}
-                except Exception as e:
-                    result[0] = {"result": "error", "message": str(e), "traceback": traceback.format_exc()}
-            QTimer.singleShot(0, execute_in_main_thread)
-            timeout = 10
-            start_time = time.time()
-            while result[0] is None and time.time() - start_time < timeout:
-                QCoreApplication.processEvents()
-                time.sleep(0.05)
-            if result[0] is None:
-                log_error(f"宏文件 '{macro_path}' 执行超时")
-                return {"result": "error", "message": "执行超时"}
-            if result[0]["result"] == "success":
-                log_message(f"执行宏文件: {macro_path}，受影响对象: {result[0]['affected_objects']}")
-                return result[0]
-            else:
-                log_error(f"执行宏文件错误: {result[0]['message']}")
-                return result[0]
+            
+            # 添加常用模块
+            import Part, Draft, Sketcher, math
+            safe_globals.update({
+                "Part": Part,
+                "Draft": Draft, 
+                "Sketcher": Sketcher,
+                "math": math
+            })
+            
+            exec(macro_code, safe_globals)
+            
         except Exception as e:
-            log_error(f"执行宏文件错误: {str(e)}")
-            return {"result": "error", "message": str(e), "traceback": traceback.format_exc()}
+            raise Exception(f"宏执行失败: {str(e)}")
+
+    def _update_document_view(self):
+        """更新文档视图"""
+        try:
+            if App.ActiveDocument:
+                App.ActiveDocument.recompute()
+            
+            if App.GuiUp and Gui.ActiveDocument and hasattr(Gui.ActiveDocument, 'ActiveView') and Gui.ActiveDocument.ActiveView:
+                Gui.ActiveDocument.ActiveView.viewAxometric()
+                Gui.ActiveDocument.ActiveView.fitAll()
+                Gui.updateGui()
+        except Exception as e:
+            log_error(f"更新视图失败: {str(e)}")
 
     def handle_validate_macro_code(self, macro_name=None, code=None):
         try:
-            if macro_name:
-                macro_path = os.path.join(App.getUserMacroDir(), f"{macro_name}.FCMacro")
-                if not os.path.exists(macro_path):
-                    return {"result": "error", "message": f"宏文件 '{macro_path}' 未找到"}
-                with open(macro_path, 'r', encoding='utf-8') as f:
-                    code = f.read()
             if not code:
-                return {"result": "error", "message": "未提供代码"}
-            try:
-                __import__('ast').parse(code)
-            except SyntaxError as e:
-                log_error(f"语法错误: {str(e)}")
-                return {"result": "error", "message": f"语法错误: {str(e)}"}
-            namespace = {
-                "App": App,
-                "Gui": Gui,
-                "FreeCAD": App,
-                "FreeCADGui": Gui,
-                "Part": __import__("Part"),
-                "math": __import__("math"),
-                "time": __import__("time")
-            }
-            result = [None]
-            def validate_in_main_thread():
-                try:
-                    if not App.ActiveDocument:
-                        App.newDocument("ValidationDoc")
-                        log_message("创建验证文档: ValidationDoc")
-                    namespace["doc"] = App.ActiveDocument
-                    exec(code, namespace)
-                    result[0] = {"result": "success"}
-                except Exception as e:
-                    result[0] = {"result": "error", "message": str(e), "traceback": traceback.format_exc()}
-            QTimer.singleShot(0, validate_in_main_thread)
-            timeout = 5
-            start_time = time.time()
-            while result[0] is None and time.time() - start_time < timeout:
-                QCoreApplication.processEvents()
-                time.sleep(0.05)
-            if result[0] is None:
-                log_error("代码验证超时")
-                return {"result": "error", "message": "验证超时"}
-            if result[0]["result"] == "success":
-                affected_objects = [obj.Name for obj in App.ActiveDocument.Objects if hasattr(obj, "Modified") and obj.Modified] if App.ActiveDocument else []
-                log_message(f"代码验证成功，受影响对象: {affected_objects}")
-                return {"result": "success", "message": "代码有效", "affected_objects": affected_objects}
-            else:
-                log_error(f"运行时错误: {result[0]['message']}")
-                return result[0]
+                if not macro_name or not os.path.exists(os.path.join(App.getUserMacroDir(), f"{macro_name}.FCMacro")):
+                    log_error("宏文件名无效或文件不存在")
+                    return {"result": "error", "message": "宏文件名无效或文件不存在"}
+                with open(os.path.join(App.getUserMacroDir(), f"{macro_name}.FCMacro"), 'r', encoding='utf-8') as f:
+                    code = f.read()
+            temp_doc = App.newDocument("TempValidateDoc")
+            exec(code, {"App": App, "Gui": Gui})
+            App.closeDocument("TempValidateDoc")
+            log_message("宏代码验证成功")
+            return {"result": "success", "message": "宏代码验证成功"}
         except Exception as e:
-            log_error(f"验证代码错误: {str(e)}")
+            log_error(f"验证宏代码错误: {str(e)}")
             return {"result": "error", "message": str(e), "traceback": traceback.format_exc()}
 
     def handle_set_view(self, view_type):
         try:
-            if not App.GuiUp or not Gui.ActiveDocument or not hasattr(Gui.ActiveDocument, 'ActiveView') or not Gui.ActiveDocument.ActiveView:
-                log_error("无活动视图或 GUI 未初始化")
-                return {"result": "error", "message": "无活动视图或 GUI 未初始化"}
+            # 检查GUI和文档状态
+            if not App.GuiUp:
+                log_error("FreeCAD GUI 未启动")
+                return {"result": "error", "message": "FreeCAD GUI 未启动，无法调整视图"}
+            
+            if not App.ActiveDocument:
+                log_error("没有活动文档")
+                return {"result": "error", "message": "没有活动文档，请先创建或打开文档"}
+            
+            if not Gui.ActiveDocument:
+                log_error("GUI文档未初始化")
+                return {"result": "error", "message": "GUI文档未初始化"}
+            
+            if not hasattr(Gui.ActiveDocument, 'ActiveView') or not Gui.ActiveDocument.ActiveView:
+                log_error("没有活动视图")
+                return {"result": "error", "message": "没有活动视图"}
             view = Gui.ActiveDocument.ActiveView
             view_map = {
                 "1": ("front", view.viewFront),
