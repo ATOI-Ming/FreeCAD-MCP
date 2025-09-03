@@ -2,106 +2,109 @@ import FreeCAD as App
 import FreeCADGui as Gui
 import os
 import sys
-from PySide import QtGui
+from PySide2 import QtWidgets
 
-# Command to show the MCP panel
+# 显示MCP面板的命令
 class FreeCADMCPShowCommand:
     def GetResources(self):
-        """Define the icon, menu text, and tooltip for the command."""
-        icon_path = "D:/FreeCAD/Mod/freecad_mcp-main/assets/icon.svg"
+        """定义命令的图标、菜单文本和工具提示"""
+        # 动态获取项目根目录
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        icon_path = os.path.join(current_dir, "assets", "icon.svg")
         if not os.path.exists(icon_path):
             icon_path = ""
         return {
             'Pixmap': icon_path,
-            'MenuText': 'Show FreeCAD MCP Panel',
-            'ToolTip': 'Show the FreeCAD Model Control Protocol panel'
+            'MenuText': '显示FreeCAD MCP面板',
+            'ToolTip': '显示FreeCAD模型控制协议面板'
         }
     
     def IsActive(self):
-        """Command is always active."""
+        """命令始终处于活动状态"""
         return True
     
     def Activated(self):
-        """Show the MCP panel when the command is triggered."""
+        """触发命令时显示MCP面板"""
         import freecad_mcp_server
         freecad_mcp_server.show_panel()
 
-# Command to run the macro file
-class FreeCADMCPRunMacroCommand:
-    last_macro_path = None
-    
+# 启动MCP服务器的命令
+class FreeCADMCPStartServerCommand:
     def GetResources(self):
-        """Define the icon, menu text, and tooltip for the command."""
-        icon_path = "D:/FreeCAD/Mod/freecad_mcp-main/assets/icon.svg"
+        """定义命令的图标、菜单文本和工具提示"""
+        # 动态获取项目根目录
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        icon_path = os.path.join(current_dir, "assets", "icon.svg")
         if not os.path.exists(icon_path):
             icon_path = ""
         return {
             'Pixmap': icon_path,
-            'MenuText': 'Run MCP Macro',
-            'ToolTip': 'Run the FreeCAD MCP macro to generate model'
+            'MenuText': '启动MCP服务器',
+            'ToolTip': '启动FreeCAD MCP服务器以接受外部连接'
         }
     
     def IsActive(self):
-        """Command is always active."""
+        """命令始终处于活动状态"""
         return True
     
     def Activated(self):
-        """Open a file dialog to select and run a macro file, default to last used path."""
-        macro_dir = App.getUserMacroDir()
-        initial_path = self.last_macro_path or macro_dir
-        macro_path, _ = QtGui.QFileDialog.getOpenFileName(None, "Select Macro", initial_path, "Macro Files (*.FCMacro)")
-        if macro_path and os.path.exists(macro_path):
-            self.last_macro_path = macro_path
-            import freecad_mcp_server
-            freecad_mcp_server.handle_run_macro(macro_path, None)
+        """触发命令时启动MCP服务器"""
+        import freecad_mcp_server
+        # 创建服务器实例并启动
+        server = freecad_mcp_server.FreeCADMCPServer()
+        server.start()
+        if server.running:
+            freecad_mcp_server.log_message("MCP服务器已启动")
         else:
-            import freecad_mcp_server
-            freecad_mcp_server.log_error("No macro file selected or file does not exist.")
+            freecad_mcp_server.log_error("MCP服务器启动失败")
 
-# Register commands
+# 注册命令
 try:
     if not hasattr(Gui, "freecad_mcp_command"):
         Gui.addCommand('FreeCAD_MCP_Show', FreeCADMCPShowCommand())
-    if not hasattr(Gui, "freecad_mcp_macro_command"):
-        Gui.addCommand('FreeCAD_MCP_RunMacro', FreeCADMCPRunMacroCommand())
+    if not hasattr(Gui, "freecad_mcp_server_command"):
+        Gui.addCommand('FreeCAD_MCP_StartServer', FreeCADMCPStartServerCommand())
 except Exception as e:
     App.Console.PrintError(f"注册命令错误: {str(e)}\n")
 
-# Define the FreeCAD MCP workbench
+# 定义FreeCAD MCP工作台
 class FreeCADMCPWorkbench(Gui.Workbench):
     MenuText = "FreeCAD MCP"
-    ToolTip = "FreeCAD Model Control Protocol"
+    ToolTip = "FreeCAD模型控制协议"
     
     def GetIcon(self):
-        """Return the workbench icon."""
-        icon_path = "D:/FreeCAD/Mod/freecad_mcp-main/assets/icon.svg"
+        """返回工作台图标"""
+        # 动态获取项目根目录
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        icon_path = os.path.join(current_dir, "assets", "icon.svg")
         if not os.path.exists(icon_path):
             icon_path = ""
         return icon_path
     
     def Initialize(self):
-        """Initialize the workbench, add commands to toolbar and menu."""
-        mod_dir = "D:/FreeCAD/Mod/freecad_mcp-main"
+        """初始化工作台，添加命令到工具栏和菜单"""
+        # 动态获取项目根目录
+        mod_dir = os.path.dirname(os.path.abspath(__file__))
         if mod_dir not in sys.path:
             sys.path.append(mod_dir)
-        self.command_list = ["FreeCAD_MCP_Show", "FreeCAD_MCP_RunMacro"]
-        self.appendToolbar("FreeCAD MCP Tools", self.command_list)
+        self.command_list = ["FreeCAD_MCP_Show", "FreeCAD_MCP_StartServer"]
+        self.appendToolbar("FreeCAD MCP工具", self.command_list)
         self.appendMenu("&FreeCAD MCP", self.command_list)
         App.Console.PrintMessage("FreeCAD MCP 工作台已初始化\n")
     
     def Activated(self):
-        """Called when the workbench is activated."""
+        """工作台被激活时调用"""
         pass
     
     def Deactivated(self):
-        """Called when the workbench is deactivated."""
+        """工作台被停用时调用"""
         pass
     
     def GetClassName(self):
-        """Return the C++ class name."""
+        """返回C++类名"""
         return "Gui::PythonWorkbench"
 
-# Add the workbench
+# 添加工作台
 try:
     if not hasattr(Gui, "freecad_mcp_workbench"):
         Gui.addWorkbench(FreeCADMCPWorkbench())
