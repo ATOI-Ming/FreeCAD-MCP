@@ -8,8 +8,12 @@ from PySide2 import QtWidgets
 class FreeCADMCPShowCommand:
     def GetResources(self):
         """定义命令的图标、菜单文本和工具提示"""
-        # 动态获取项目根目录
-        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # 安全获取项目根目录
+        try:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+        except NameError:
+            # 如果__file__未定义，使用FreeCAD的Mod目录
+            current_dir = os.path.join(App.getUserAppDataDir(), "Mod", "FreeCAD-MCP-main")
         icon_path = os.path.join(current_dir, "assets", "icon.svg")
         if not os.path.exists(icon_path):
             icon_path = ""
@@ -32,8 +36,12 @@ class FreeCADMCPShowCommand:
 class FreeCADMCPStartServerCommand:
     def GetResources(self):
         """定义命令的图标、菜单文本和工具提示"""
-        # 动态获取项目根目录
-        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # 安全获取项目根目录
+        try:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+        except NameError:
+            # 如果__file__未定义，使用FreeCAD的Mod目录
+            current_dir = os.path.join(App.getUserAppDataDir(), "Mod", "FreeCAD-MCP-main")
         icon_path = os.path.join(current_dir, "assets", "icon.svg")
         if not os.path.exists(icon_path):
             icon_path = ""
@@ -74,8 +82,12 @@ class FreeCADMCPWorkbench(Gui.Workbench):
     
     def GetIcon(self):
         """返回工作台图标"""
-        # 动态获取项目根目录
-        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # 安全获取项目根目录
+        try:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+        except NameError:
+            # 如果__file__未定义，使用FreeCAD的Mod目录
+            current_dir = os.path.join(App.getUserAppDataDir(), "Mod", "FreeCAD-MCP-main")
         icon_path = os.path.join(current_dir, "assets", "icon.svg")
         if not os.path.exists(icon_path):
             icon_path = ""
@@ -83,8 +95,12 @@ class FreeCADMCPWorkbench(Gui.Workbench):
     
     def Initialize(self):
         """初始化工作台，添加命令到工具栏和菜单"""
-        # 动态获取项目根目录
-        mod_dir = os.path.dirname(os.path.abspath(__file__))
+        # 安全获取项目根目录
+        try:
+            mod_dir = os.path.dirname(os.path.abspath(__file__))
+        except NameError:
+            # 如果__file__未定义，使用FreeCAD的Mod目录
+            mod_dir = os.path.join(App.getUserAppDataDir(), "Mod", "FreeCAD-MCP-main")
         if mod_dir not in sys.path:
             sys.path.append(mod_dir)
         self.command_list = ["FreeCAD_MCP_Show", "FreeCAD_MCP_StartServer"]
