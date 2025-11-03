@@ -326,7 +326,7 @@ Contributions are welcome! Follow these steps:
 3. Commit changes: `git commit -m "Add your feature"`.
 4. Push and create a Pull Request.
 
-Please adhere to the Code of Conduct (to be added, see [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)).
+For questions or collaborations, please open an issue or contact [1757772673@qq.com,抖音：huhushuxue95]
 
 ## License
 
