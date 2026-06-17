@@ -54,21 +54,17 @@ Download the demo video: [FreeCAD MCP Demo MP4](assets/freecad.mp4)
 - **Python**: Version 3.12+ (included with FreeCAD or installed via Anaconda).
 - **Anaconda** (recommended for dependency management): [Download Anaconda](https://www.anaconda.com/download). Select the version for your operating system.
 - **Python Dependencies**:
-  - Required packages: `mcp-server>=1.2.0`, `httpx>=0.24.1` (specified in `pyproject.toml`).
+  - Required packages: `mcp-server` (specified in `pyproject.toml`).
   - Installation commands:
     ```bash
-    # Create and activate Anaconda environment
-    conda create -n freecad_mcp python=3.12
-    conda activate freecad_mcp
-    pip install mcp-server>=1.2.0 httpx>=0.24.1
-    # Or use system Python
-    python -m pip install mcp-server>=1.2.0 httpx>=0.24.1
+    # use system Python
+    pip install mcp-server
     ```
   - Verify installation:
     ```bash
-    pip show mcp-server httpx
+    pip show mcp-server 
     ```
-    Ensure `mcp-server` version is >=1.2.0 and `httpx` version is >=0.24.1.
+    Ensure `mcp-server` version .
 
 ### Installation Steps
 
