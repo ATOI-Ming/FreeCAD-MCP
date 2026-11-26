@@ -92,6 +92,36 @@ Download the demo video: [FreeCAD MCP Demo MP4](assets/freecad.mp4)
    - Click `FreeCAD_MCP_Show` to open the control panel.
    - Check the temporary directory (e.g., `%TEMP%\freecad_mcp_log.txt`) for startup messages.
 
+## Windows / FreeCAD 1.x Compatibility Notes (local fork)
+
+FreeCAD 1.x (tested with 1.1.4 on Windows 11) required these changes:
+
+- **Qt6 / PySide6**: `freecad_mcp_server.py` and `InitGui.py` import PySide6 with a PySide2 fallback.
+  FreeCAD 1.x ships Qt6, so the original `PySide2`-only imports failed to load.
+- **InitGui execution namespace**: FreeCAD runs `InitGui.py` via `exec(code, globals, locals)`, so
+  module-level names are invisible inside class bodies/methods (and `__file__` is undefined).
+  Resolved paths are published into `globals()` and bound as default arguments.
+- **Versioned user directories**: FreeCAD 1.1 uses `%APPDATA%\FreeCAD\v1-1\Mod` and
+  `%APPDATA%\FreeCAD\v1-1\Macro`. Relative macro names are now resolved by the FreeCAD-side
+  server instead of being turned into a hardcoded absolute path by the client.
+- **Server lifetime**: the toolbar command previously created the server as a local variable, so
+  Python garbage-collected it and closed the listening socket immediately. `start_server()` now
+  keeps a module-level singleton.
+- **MCP SDK**: requires `mcp>=1.2,<2`; FastMCP was removed in mcp 2.x.
+- **stdio encoding**: stdout/stderr are forced to UTF-8. Windows defaults to GBK, which corrupts
+  the JSON-RPC stream whenever a message contains non-ASCII text.
+- **Panel failure**: `get_report` falls back to `%TEMP%\freecad_mcp_log.txt` if the GUI panel
+  cannot be created.
+
+Local layout used during development:
+
+- Source: `C:\Users\jimol\workspace\FreeCAD-MCP`
+- Addon install: directory junction `%APPDATA%\FreeCAD\v1-1\Mod\FreeCAD-MCP` -> source
+- Python env: `.venv` created from FreeCAD's bundled Python 3.11 (`<FreeCAD>\bin\python.exe`)
+- Claude Code (user scope): `claude mcp add --scope user freecad -- <repo>\.venv\Scripts\python.exe <repo>\src\freecad_mcp_client.py`
+- Usage: start FreeCAD, switch to the `FreeCAD MCP` workbench, click `启动MCP服务器` — tools only
+  work while that server is listening on `localhost:9876`.
+
 ## MCP Configuration
 
 Configure the MCP client to communicate with FreeCAD via `stdio` or TCP.

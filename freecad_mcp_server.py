@@ -6,9 +6,14 @@ import socket
 import traceback
 import time
 import sys
-from PySide2.QtCore import QTimer, QCoreApplication
-from PySide2.QtWidgets import QMessageBox, QTextEdit, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
-from PySide2.QtGui import QIcon
+try:  # FreeCAD 1.x uses Qt6 / PySide6
+    from PySide6.QtCore import QTimer, QCoreApplication
+    from PySide6.QtWidgets import QMessageBox, QWidget, QTextEdit, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
+    from PySide6.QtGui import QIcon
+except ImportError:  # FreeCAD 0.21 and older use Qt5 / PySide2
+    from PySide2.QtCore import QTimer, QCoreApplication
+    from PySide2.QtWidgets import QMessageBox, QWidget, QTextEdit, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
+    from PySide2.QtGui import QIcon
 
 # 确保模块路径
 mod_dir = os.path.join(App.getUserAppDataDir(), "Mod", "freecad_mcp")
@@ -389,9 +394,16 @@ class FreeCADMCPServer:
                 App.ActiveDocument.recompute()
             
             if App.GuiUp and Gui.ActiveDocument and hasattr(Gui.ActiveDocument, 'ActiveView') and Gui.ActiveDocument.ActiveView:
-                Gui.ActiveDocument.ActiveView.viewAxometric()
-                Gui.ActiveDocument.ActiveView.fitAll()
-                Gui.updateGui()
+                view = Gui.ActiveDocument.ActiveView
+                # FreeCAD 1.x renamed viewAxometric -> viewAxonometric; support both.
+                axial = getattr(view, 'viewAxonometric', None) or getattr(view, 'viewAxometric', None)
+                if callable(axial):
+                    axial()
+                view.fitAll()
+                try:
+                    Gui.updateGui()
+                except Exception:
+                    pass
         except Exception as e:
             log_error(f"更新视图失败: {str(e)}")
 
@@ -459,9 +471,17 @@ class FreeCADMCPServer:
 
     def handle_get_report(self):
         try:
-            if not panel_instance or not panel_instance.report_browser:
+            if not panel_instance or not getattr(panel_instance, "report_browser", None):
                 show_panel()
-            report = panel_instance.report_browser.toPlainText()
+            browser = getattr(panel_instance, "report_browser", None)
+            if browser is not None:
+                report = browser.toPlainText()
+            else:
+                # No GUI panel available: fall back to the log file.
+                report = ""
+                if os.path.exists(self.log_file):
+                    with open(self.log_file, "r", encoding="utf-8") as f:
+                        report = f.read()
             log_message("获取报告")
             return {"result": "success", "report": report}
         except Exception as e:
@@ -470,7 +490,6 @@ class FreeCADMCPServer:
 
 class FreeCADMCPPanel:
     def __init__(self):
-        from PySide2.QtWidgets import QWidget
         self.form = QWidget()
         self.form.setWindowTitle("FreeCAD MCP 控制面板")
         layout = QVBoxLayout(self.form)
@@ -508,23 +527,20 @@ class FreeCADMCPPanel:
         self.server = None
 
     def start_server(self):
-        if not self.server:
-            self.server = FreeCADMCPServer()
-            self.server.start()
-            if self.server.running:
-                self.status_label.setText("服务器状态: 运行中")
-                self.start_button.setEnabled(False)
-                self.stop_button.setEnabled(True)
-                self.report_browser.append("服务器已启动")
+        self.server = start_server()
+        if self.server.running:
+            self.status_label.setText("服务器状态: 运行中")
+            self.start_button.setEnabled(False)
+            self.stop_button.setEnabled(True)
+            self.report_browser.append("服务器已启动")
 
     def stop_server(self):
-        if self.server:
-            self.server.stop()
-            self.server = None
-            self.status_label.setText("服务器状态: 已停止")
-            self.start_button.setEnabled(True)
-            self.stop_button.setEnabled(False)
-            self.report_browser.append("服务器已停止")
+        stop_server()
+        self.server = None
+        self.status_label.setText("服务器状态: 已停止")
+        self.start_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
+        self.report_browser.append("服务器已停止")
 
     def set_view(self, view_type):
         if self.server:
@@ -548,3 +564,24 @@ def show_panel():
         App.Console.PrintMessage("MCP 面板已显示\n")
     except Exception as e:
         App.Console.PrintError(f"显示面板错误: {str(e)}\n")
+
+
+# The toolbar command used to create the server as a local variable, so Python
+# garbage-collected it (and closed the listening socket) as soon as the command
+# returned. Keep a module-level reference so the server outlives the command.
+server_instance = None
+
+def start_server(host='localhost', port=9876):
+    """Start the MCP server once and keep it alive for the session."""
+    global server_instance
+    if server_instance is not None and getattr(server_instance, 'running', False):
+        return server_instance
+    server_instance = FreeCADMCPServer(host, port)
+    server_instance.start()
+    return server_instance
+
+def stop_server():
+    global server_instance
+    if server_instance is not None:
+        server_instance.stop()
+        server_instance = None

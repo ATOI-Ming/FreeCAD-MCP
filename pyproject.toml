@@ -6,7 +6,8 @@ authors = [
     {name = "ATOI-ming", email = "1757772673@qq.com"}
 ]
 dependencies = [
-    "mcp-server>=1.2.0",
+    # The client uses the FastMCP API that was removed in mcp 2.x.
+    "mcp>=1.2.0,<2",
     "httpx>=0.24.1"
 ]
 readme = "README.md"

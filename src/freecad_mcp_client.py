@@ -16,10 +16,18 @@ import argparse
 import traceback
 from pydantic import BaseModel
 
+# MCP stdio transport is UTF-8; Windows consoles default to GBK, which would
+# corrupt Chinese text in JSON-RPC messages.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 try:
     from mcp.server.fastmcp import FastMCP
 except ImportError as e:
-    print(f"无法导入 FastMCP: {str(e)}\n请运行 `pip install mcp`")
+    print(f"无法导入 FastMCP: {str(e)}\n请运行 `pip install mcp`", file=sys.stderr)
     sys.exit(1)
 
 mod_dir = os.path.join(os.path.expanduser("~"), "FreeCAD", "Mod", "freecad_mcp")
@@ -75,22 +83,39 @@ def normalize_macro_code(code: str) -> str:
 async def send_command_to_freecad(command: Dict[str, Any]) -> Dict[str, Any]:
     """发送命令到FreeCAD服务器"""
     try:
-        reader, writer = await asyncio.open_connection(FREECAD_HOST, FREECAD_PORT)
-        
+        reader, writer = await asyncio.wait_for(
+            asyncio.open_connection(FREECAD_HOST, FREECAD_PORT), timeout=10
+        )
+
         # 发送命令
         command_json = json.dumps(command, ensure_ascii=False)
         writer.write(command_json.encode('utf-8'))
         await writer.drain()
-        
-        # 接收响应
-        response_data = await reader.read(8192)
-        response = json.loads(response_data.decode('utf-8'))
-        
+
+        # 接收响应（响应可能分多个 TCP 包到达，持续读取直到可解析）
+        response_data = b""
+        response = None
+        while True:
+            chunk = await asyncio.wait_for(reader.read(65536), timeout=30)
+            if not chunk:
+                break
+            response_data += chunk
+            try:
+                response = json.loads(response_data.decode('utf-8'))
+                break
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                continue
+        if response is None:
+            raise ValueError("FreeCAD 返回了无法解析的响应")
+
         writer.close()
-        await writer.wait_closed()
-        
+        try:
+            await writer.wait_closed()
+        except Exception:
+            pass
+
         return response
-        
+
     except Exception as e:
         return {"result": "error", "message": f"连接FreeCAD服务器失败: {str(e)}"}
 
@@ -110,7 +135,7 @@ def create_macro(macro_name: str, template_type: str = "default") -> Dict[str, A
         
         # 获取绝对路径
         absolute_path = get_absolute_macro_path(macro_name)
-        print(f"创建宏文件: {absolute_path}")
+        print(f"创建宏文件: {absolute_path}", file=sys.stderr)
         
         command = {
             "type": "create_macro",
@@ -149,7 +174,7 @@ def update_macro(macro_name: str, code: str) -> Dict[str, Any]:
     try:
         # 获取绝对路径
         absolute_path = get_absolute_macro_path(macro_name)
-        print(f"更新宏文件: {absolute_path}")
+        print(f"更新宏文件: {absolute_path}", file=sys.stderr)
         
         # 标准化代码
         normalized_code = normalize_macro_code(code)
@@ -189,24 +214,21 @@ def run_macro(macro_path: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
         params: 可选参数
     """
     try:
-        # 如果传入的是相对路径或宏名称，转换为绝对路径
-        if not os.path.isabs(macro_path):
-            # 提取宏名称
-            macro_name = os.path.basename(macro_path)
-            if not macro_name.endswith('.FCMacro'):
-                macro_name = f"{macro_name}.FCMacro"
-            
-            # 获取绝对路径
-            absolute_path = get_absolute_macro_path(macro_name.replace('.FCMacro', ''))
+        # 相对路径/宏名交给 FreeCAD 服务端解析：它才知道自己版本化的宏目录
+        # （FreeCAD 1.1 使用 v1-1 之类的版本子目录，客户端无法硬编码）。
+        if os.path.isabs(macro_path):
+            target_path = macro_path
         else:
-            absolute_path = macro_path
-        
-        print(f"执行宏文件: {absolute_path}")
-        
+            target_path = os.path.basename(macro_path)
+            if not target_path.endswith('.FCMacro'):
+                target_path = f"{target_path}.FCMacro"
+
+        print(f"执行宏文件: {target_path}", file=sys.stderr)
+
         command = {
             "type": "run_macro",
             "params": {
-                "macro_path": absolute_path,
+                "macro_path": target_path,
                 "params": params if params is not None else {}
             }
         }
@@ -240,7 +262,7 @@ def validate_macro_code(macro_name: str = None, code: str = None) -> Dict[str, A
     try:
         if macro_name:
             absolute_path = get_absolute_macro_path(macro_name)
-            print(f"验证宏文件: {absolute_path}")
+            print(f"验证宏文件: {absolute_path}", file=sys.stderr)
         
         command = {
             "type": "validate_macro_code",
@@ -339,8 +361,8 @@ def main():
     FREECAD_HOST = freecad_host
     FREECAD_PORT = freecad_port
     
-    print(f"FreeCAD MCP客户端启动 ")
-    print(f"连接到: {FREECAD_HOST}:{FREECAD_PORT}")
+    print(f"FreeCAD MCP客户端启动", file=sys.stderr)
+    print(f"连接到: {FREECAD_HOST}:{FREECAD_PORT}", file=sys.stderr)
 
     
     # 启动MCP服务器
