@@ -346,25 +346,74 @@ def get_report() -> Dict[str, Any]:
     except Exception as e:
         return {"result": "error", "message": str(e), "traceback": traceback.format_exc()}
 
+def _parse_json_arg(raw, name):
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as e:
+        print(f"参数 {name} 不是合法 JSON: {e}", file=sys.stderr)
+        sys.exit(2)
+
+
+def _parse_code_arg(raw):
+    # Shells don't expand \n inside quoted arguments, so accept literal "\n"
+    # as a newline to keep the documented one-line examples usable.
+    if raw is None:
+        return None
+    return raw.replace("\\n", "\n")
+
+
+def run_cli(args):
+    """执行单条命令行请求（不经 MCP，直接走 TCP）。"""
+    if args.create_macro:
+        return create_macro(args.create_macro, args.template_type)
+    if args.update_macro:
+        return update_macro(args.update_macro, _parse_code_arg(args.code) or "")
+    if args.run_macro:
+        params = _parse_json_arg(args.params, "--params") if args.params else None
+        return run_macro(args.run_macro, params)
+    if args.validate_macro_code is not None:
+        return validate_macro_code(args.validate_macro_code or None, _parse_code_arg(args.code))
+    if args.set_view is not None:
+        return set_view(_parse_json_arg(args.set_view, "--set-view"))
+    if args.get_report:
+        return get_report()
+    return None
+
+
 def main():
-    """主函数"""
-    parser = argparse.ArgumentParser(description='FreeCAD MCP客户端 - 绝对路径版本')
+    """主函数：带子命令时执行单条请求，否则以 stdio MCP 服务器运行。"""
+    parser = argparse.ArgumentParser(description='FreeCAD MCP客户端')
     parser.add_argument('--host', default='localhost', help='FreeCAD服务器主机')
     parser.add_argument('--port', type=int, default=9876, help='FreeCAD服务器端口')
-    
+
+    commands = parser.add_mutually_exclusive_group()
+    commands.add_argument('--create-macro', metavar='NAME', help='创建宏文件')
+    commands.add_argument('--update-macro', metavar='NAME', help='更新宏文件内容（配合 --code）')
+    commands.add_argument('--run-macro', metavar='MACRO', help='运行宏（相对宏名由 FreeCAD 服务端解析）')
+    commands.add_argument('--validate-macro-code', metavar='NAME', nargs='?', const='',
+                          help='校验宏代码（配合 --code；NAME 可选）')
+    commands.add_argument('--set-view', metavar='JSON', help='设置视图，例如 {"view_type": "7"}')
+    commands.add_argument('--get-report', action='store_true', help='获取服务器日志')
+
+    parser.add_argument('--template-type', default='default',
+                        choices=['default', 'basic', 'part', 'sketch'], help='宏模板类型')
+    parser.add_argument('--code', help='宏代码内容')
+    parser.add_argument('--params', help='运行宏时的 JSON 参数')
+
     args = parser.parse_args()
-    
-    # 使用小写变量名避免常量重定义警告
+
     global FREECAD_HOST, FREECAD_PORT
-    freecad_host = args.host
-    freecad_port = args.port
-    FREECAD_HOST = freecad_host
-    FREECAD_PORT = freecad_port
-    
+    FREECAD_HOST = args.host
+    FREECAD_PORT = args.port
+
+    result = run_cli(args)
+    if result is not None:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        sys.exit(0 if result.get("result") == "success" else 1)
+
     print(f"FreeCAD MCP客户端启动", file=sys.stderr)
     print(f"连接到: {FREECAD_HOST}:{FREECAD_PORT}", file=sys.stderr)
 
-    
     # 启动MCP服务器
     mcp.run()
 
