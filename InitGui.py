@@ -2,23 +2,51 @@ import FreeCAD as App
 import FreeCADGui as Gui
 import os
 import sys
-from PySide2 import QtWidgets
+
+try:  # FreeCAD 1.x uses Qt6 / PySide6
+    from PySide6 import QtWidgets
+except ImportError:  # FreeCAD 0.21 and older use Qt5 / PySide2
+    from PySide2 import QtWidgets
+
+def _locate_addon_dir():
+    """FreeCAD executes InitGui.py without defining __file__, so resolve the
+    addon directory from __file__ when available, else from sys.path."""
+    try:
+        return os.path.dirname(os.path.abspath(__file__))
+    except NameError:
+        pass
+    for entry in sys.path:
+        if os.path.basename(os.path.normpath(entry)).lower() == "freecad-mcp":
+            return entry
+    return os.path.join(App.getUserAppDataDir(), "Mod", "FreeCAD-MCP")
+
+# Make the addon directory importable as soon as the workbench is registered,
+# so the commands also work before the workbench is activated.
+_addon_dir = _locate_addon_dir()
+if _addon_dir not in sys.path:
+    sys.path.append(_addon_dir)
+
+# FreeCAD executes InitGui.py with exec(code, globals, locals): module-level
+# assignments land in `locals` and are invisible inside class bodies/methods,
+# which look names up in `globals`. Publish the resolved paths there.
+_ICON_PATH = ""
+for _base in [_addon_dir] + [p for p in sys.path if p]:
+    _candidate = os.path.join(_base, "assets", "icon.svg")
+    if os.path.exists(_candidate):
+        _ICON_PATH = _candidate
+        break
+
+try:
+    globals().update({"_addon_dir": _addon_dir, "_ICON_PATH": _ICON_PATH})
+except Exception:
+    pass
 
 # 显示MCP面板的命令
 class FreeCADMCPShowCommand:
-    def GetResources(self):
+    def GetResources(self, _icon=_ICON_PATH):
         """定义命令的图标、菜单文本和工具提示"""
-        # 安全获取项目根目录
-        try:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-        except NameError:
-            # 如果__file__未定义，使用FreeCAD的Mod目录
-            current_dir = os.path.join(App.getUserAppDataDir(), "Mod", "FreeCAD-MCP-main")
-        icon_path = os.path.join(current_dir, "assets", "icon.svg")
-        if not os.path.exists(icon_path):
-            icon_path = ""
         return {
-            'Pixmap': icon_path,
+            'Pixmap': _icon,
             'MenuText': '显示FreeCAD MCP面板',
             'ToolTip': '显示FreeCAD模型控制协议面板'
         }
@@ -34,19 +62,10 @@ class FreeCADMCPShowCommand:
 
 # 启动MCP服务器的命令
 class FreeCADMCPStartServerCommand:
-    def GetResources(self):
+    def GetResources(self, _icon=_ICON_PATH):
         """定义命令的图标、菜单文本和工具提示"""
-        # 安全获取项目根目录
-        try:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-        except NameError:
-            # 如果__file__未定义，使用FreeCAD的Mod目录
-            current_dir = os.path.join(App.getUserAppDataDir(), "Mod", "FreeCAD-MCP-main")
-        icon_path = os.path.join(current_dir, "assets", "icon.svg")
-        if not os.path.exists(icon_path):
-            icon_path = ""
         return {
-            'Pixmap': icon_path,
+            'Pixmap': _icon,
             'MenuText': '启动MCP服务器',
             'ToolTip': '启动FreeCAD MCP服务器以接受外部连接'
         }
@@ -58,9 +77,8 @@ class FreeCADMCPStartServerCommand:
     def Activated(self):
         """触发命令时启动MCP服务器"""
         import freecad_mcp_server
-        # 创建服务器实例并启动
-        server = freecad_mcp_server.FreeCADMCPServer()
-        server.start()
+        # start_server() keeps a module-level reference so the socket is not GC'd
+        server = freecad_mcp_server.start_server()
         if server.running:
             freecad_mcp_server.log_message("MCP服务器已启动")
         else:
@@ -80,29 +98,14 @@ class FreeCADMCPWorkbench(Gui.Workbench):
     MenuText = "FreeCAD MCP"
     ToolTip = "FreeCAD模型控制协议"
     
-    def GetIcon(self):
+    def GetIcon(self, _icon=_ICON_PATH):
         """返回工作台图标"""
-        # 安全获取项目根目录
-        try:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-        except NameError:
-            # 如果__file__未定义，使用FreeCAD的Mod目录
-            current_dir = os.path.join(App.getUserAppDataDir(), "Mod", "FreeCAD-MCP-main")
-        icon_path = os.path.join(current_dir, "assets", "icon.svg")
-        if not os.path.exists(icon_path):
-            icon_path = ""
-        return icon_path
+        return _icon
     
-    def Initialize(self):
+    def Initialize(self, _mod_dir=_addon_dir):
         """初始化工作台，添加命令到工具栏和菜单"""
-        # 安全获取项目根目录
-        try:
-            mod_dir = os.path.dirname(os.path.abspath(__file__))
-        except NameError:
-            # 如果__file__未定义，使用FreeCAD的Mod目录
-            mod_dir = os.path.join(App.getUserAppDataDir(), "Mod", "FreeCAD-MCP-main")
-        if mod_dir not in sys.path:
-            sys.path.append(mod_dir)
+        if _mod_dir not in sys.path:
+            sys.path.append(_mod_dir)
         self.command_list = ["FreeCAD_MCP_Show", "FreeCAD_MCP_StartServer"]
         self.appendToolbar("FreeCAD MCP工具", self.command_list)
         self.appendMenu("&FreeCAD MCP", self.command_list)
